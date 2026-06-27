@@ -24,14 +24,18 @@ ghcr.io/xwordsman/nextbuf:sha-<commit>
 
 如果仓库是私有的，需要在服务器上配置 GHCR 拉取权限。
 
-GitHub Actions 发布 GHCR 镜像需要在仓库 Secrets 中配置：
+GitHub Actions 默认使用仓库自带的 `GITHUB_TOKEN` 发布 GHCR 镜像，不需要额外配置 PAT。
+
+如果出现 `permission_denied: write_package`，通常说明 `ghcr.io/xwordsman/nextbuf` 这个 package 已经存在，但没有把 `Xwordsman/NextBuf` 仓库授予 Actions 写入权限。处理方式：
 
 ```text
-GHCR_TOKEN     classic GitHub PAT，至少勾选 write:packages 和 read:packages；私有仓库再勾选 repo
-GHCR_USERNAME  可选，默认使用触发 Actions 的 GitHub 用户名
+GitHub 个人主页 -> Packages -> nextbuf -> Package settings -> Manage Actions access
+添加 Xwordsman/NextBuf，并授予 Write 或 Admin 权限
 ```
 
-如果未配置 `GHCR_TOKEN`，Actions 会在推送镜像前直接失败并提示缺少密钥，避免回退到没有写包权限的 `GITHUB_TOKEN`。
+如果这个 package 是误创建的，也可以删除该 package 后重新运行 Actions。由当前仓库的 `GITHUB_TOKEN` 首次创建 package 时，GitHub 会自动把 package 关联到当前仓库。
+
+也可以使用 classic PAT 作为备用方案，但这不是默认推荐路径。
 
 ## 2. 准备环境变量
 
