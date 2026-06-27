@@ -65,7 +65,7 @@ npm run db:migrate
 容器启动后访问：
 
 ```text
-http://服务器IP:3000/install
+http://服务器IP:3050/install
 ```
 
 填写：

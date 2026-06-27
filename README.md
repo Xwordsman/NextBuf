@@ -58,6 +58,8 @@ docker compose up -d
 
 Web 容器启动时会自动执行数据库迁移，然后启动 Next.js。
 
+Compose 默认暴露宿主机端口 `3050`，访问 [http://localhost:3050/install](http://localhost:3050/install) 完成首次安装。
+
 ## 部署
 
 推送到 GitHub 后，GitHub Actions 会构建并推送 Docker 镜像。服务器可通过宝塔 Docker 容器编排拉取镜像运行。
