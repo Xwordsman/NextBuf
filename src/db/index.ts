@@ -4,6 +4,7 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "@/db/schema";
+import { recordSqlQuery } from "@/server/request-metrics";
 
 const databaseUrl =
   process.env.DATABASE_URL ?? "postgres://nextbuf:nextbuf@localhost:5432/nextbuf";
@@ -23,7 +24,16 @@ const sql =
   });
 
 export const db: Database =
-  globalThis.nextbufDb ?? drizzle(sql, { schema, casing: "snake_case" });
+  globalThis.nextbufDb ??
+  drizzle(sql, {
+    schema,
+    casing: "snake_case",
+    logger: {
+      logQuery() {
+        recordSqlQuery();
+      },
+    },
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.nextbufSql = sql;

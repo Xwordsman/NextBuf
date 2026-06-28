@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Code2, Languages } from "lucide-react";
+import { Code2 } from "lucide-react";
 
+import { getRequestMetricsSnapshot } from "@/server/request-metrics";
 import { getRuntimeInfo } from "@/server/runtime";
 
 const internalLinks = [
@@ -13,8 +14,7 @@ const internalLinks = [
 
 export function SiteFooter() {
   const runtime = getRuntimeInfo();
-  const commit = runtime.commit ? runtime.commit.slice(0, 7) : "local";
-  const buildTime = runtime.buildTime ?? "unknown";
+  const metrics = getRequestMetricsSnapshot();
 
   return (
     <footer className="border-t border-border bg-panel text-xs text-muted-foreground">
@@ -44,22 +44,24 @@ export function SiteFooter() {
             </a>
           </nav>
 
-          <div className="inline-flex items-center gap-2 text-muted-foreground">
-            <Languages size={15} />
-            <span>Select Language</span>
-            <span className="text-border">·</span>
-            <strong className="text-base font-semibold text-foreground">NextBuf</strong>
-          </div>
+          <strong className="text-base font-semibold text-foreground">NextBuf</strong>
         </div>
 
         <div className="space-y-2 leading-6">
           <p className="text-sm text-foreground/80">创作者们的轻社区</p>
-          <p>NextBuf is powered by focused discussions.</p>
-          <p className="font-mono uppercase tracking-normal text-muted-foreground">
-            VERSION: {runtime.version} · ENV: {runtime.nodeEnv} · BUILD: {buildTime} ·
-            COMMIT: {commit}
+          <p className="font-mono tracking-normal text-muted-foreground">
+            Powered by{" "}
+            <a
+              href="https://github.com/Xwordsman/NextBuf"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-foreground/80 transition-colors duration-200 hover:text-primary"
+            >
+              NextBuf
+            </a>{" "}
+            · VERSION: {runtime.version} · Time: {metrics.elapsedSeconds.toFixed(3)} · SQL:{" "}
+            {metrics.sqlCount}
           </p>
-          <p>Do have faith in what you&apos;re building.</p>
         </div>
       </div>
     </footer>
