@@ -15,6 +15,7 @@ export type CurrentUser = {
   id: string;
   username: string;
   email: string;
+  avatarUrl: string | null;
   role: string;
   trustLevel: number;
   status: string;
@@ -111,6 +112,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       id: users.id,
       username: users.username,
       email: users.email,
+      avatarUrl: users.avatarUrl,
       role: users.role,
       trustLevel: users.trustLevel,
       status: users.status,

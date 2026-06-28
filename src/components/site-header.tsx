@@ -1,19 +1,19 @@
 import Link from "next/link";
 import {
   Bell,
-  Bookmark,
   LayoutDashboard,
   LogIn,
   LogOut,
-  PenLine,
   Search,
+  Settings,
+  UserRound,
   UserPlus,
 } from "lucide-react";
 
 import { logoutAction } from "@/server/actions/auth";
 import type { CurrentUser } from "@/server/auth";
 import type { SiteSettings } from "@/db/schema";
-import { buttonClassName } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 
 type SiteHeaderProps = {
   settings: SiteSettings | null;
@@ -47,70 +47,93 @@ export function SiteHeader({ settings, user }: SiteHeaderProps) {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {user ? (
             <>
               <Link
-                href="/posts/new"
-                className={buttonClassName({ variant: "primary", size: "sm" })}
-              >
-                <PenLine size={15} />
-                发帖
-              </Link>
-              {user.role === "admin" ? (
-                <Link
-                  href="/admin"
-                  className={buttonClassName({ variant: "secondary", size: "sm" })}
-                >
-                  <LayoutDashboard size={15} />
-                  后台
-                </Link>
-              ) : null}
-              <Link
                 href="/me/notifications"
-                className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
+                aria-label="通知"
+                title="通知"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
               >
-                <Bell size={15} />
-                通知
+                <Bell size={18} />
               </Link>
-              <Link
-                href="/me/bookmarks"
-                className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
-              >
-                <Bookmark size={15} />
-                收藏
-              </Link>
-              <Link
-                href="/me"
-                className="min-h-9 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
-              >
-                {user.username}
-              </Link>
-              <form action={logoutAction}>
-                <button
-                  type="submit"
-                  className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
+
+              <details className="group relative">
+                <summary
+                  aria-label="个人菜单"
+                  title="个人菜单"
+                  className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-[var(--radius-control)] transition-colors duration-200 hover:bg-panel-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden"
                 >
-                  <LogOut size={15} />
-                  退出
-                </button>
-              </form>
+                  <Avatar name={user.username} src={user.avatarUrl} size="sm" />
+                </summary>
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-[var(--radius-base)] border border-border bg-panel shadow-[0_12px_32px_rgb(15_23_42_/_0.14)]">
+                  <div className="flex gap-3 border-b border-border p-4">
+                    <Avatar name={user.username} src={user.avatarUrl} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-foreground">
+                        {user.username}
+                      </div>
+                      <div className="mt-1 font-mono text-xs text-muted">
+                        UID {user.id.slice(0, 8)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <nav className="p-2 text-sm">
+                    {user.role === "admin" ? (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
+                      >
+                        <LayoutDashboard size={16} />
+                        管理后台
+                      </Link>
+                    ) : null}
+                    <Link
+                      href={`/users/${user.username}`}
+                      className="flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
+                    >
+                      <UserRound size={16} />
+                      个人主页
+                    </Link>
+                    <Link
+                      href="/me/settings"
+                      className="flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
+                    >
+                      <Settings size={16} />
+                      设置
+                    </Link>
+                    <form action={logoutAction}>
+                      <button
+                        type="submit"
+                        className="flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-left text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
+                      >
+                        <LogOut size={16} />
+                        退出
+                      </button>
+                    </form>
+                  </nav>
+                </div>
+              </details>
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className={buttonClassName({ variant: "secondary", size: "sm" })}
+                aria-label="登录"
+                title="登录"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
               >
-                <LogIn size={15} />
-                登录
+                <LogIn size={18} />
               </Link>
               <Link
                 href="/register"
-                className={buttonClassName({ variant: "primary", size: "sm" })}
+                aria-label="注册"
+                title="注册"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground"
               >
-                <UserPlus size={15} />
-                注册
+                <UserPlus size={18} />
               </Link>
             </>
           )}
