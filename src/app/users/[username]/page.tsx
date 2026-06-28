@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth";
 import { getUserProfile } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, getInitial } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -40,20 +40,26 @@ export default async function UserProfilePage({
           <CardContent>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex gap-3">
-                <Avatar name={profile.username} src={profile.avatarUrl} />
+                <Avatar size="lg">
+                  <AvatarImage
+                    src={profile.avatarUrl ?? undefined}
+                    alt={`${profile.username} 的头像`}
+                  />
+                  <AvatarFallback>{getInitial(profile.username)}</AvatarFallback>
+                </Avatar>
                 <div>
                   <h1 className="text-2xl font-semibold">{profile.username}</h1>
-                  <p className="mt-2 text-sm text-muted">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     加入于 {formatDateTime(profile.createdAt)}
                   </p>
-                  <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
+                  <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
                     {profile.bio ?? "这个用户还没有填写简介。"}
                   </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge tone="muted">L{profile.trustLevel}</Badge>
-                {profile.role === "admin" ? <Badge tone="accent">管理员</Badge> : null}
+                <Badge variant="secondary">L{profile.trustLevel}</Badge>
+                {profile.role === "admin" ? <Badge>管理员</Badge> : null}
               </div>
             </div>
           </CardContent>

@@ -12,7 +12,7 @@ export function NodeGrid({ nodes }: NodeGridProps) {
   const roots = nodes.filter((node) => !node.parentId);
 
   if (roots.length === 0) {
-    return <Card className="p-8 text-center text-sm text-muted">还没有节点。</Card>;
+    return <Card className="p-8 text-center text-sm text-muted-foreground">还没有节点。</Card>;
   }
 
   return (
@@ -26,7 +26,7 @@ export function NodeGrid({ nodes }: NodeGridProps) {
               <Link href={`/nodes/${root.slug}`} className="font-semibold hover:text-primary">
                 {root.name}
               </Link>
-              <Badge tone={root.postingMode === "admin_only" ? "accent" : "muted"}>
+              <Badge variant={root.postingMode === "admin_only" ? "default" : "secondary"}>
                 {root.postingMode === "admin_only" ? "官方" : "开放"}
               </Badge>
             </CardHeader>

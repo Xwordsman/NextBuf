@@ -3,12 +3,16 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
-import { Field, FieldError, FieldHint, Label } from "@/components/ui/field";
+import { Field, FieldError, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import {
+  NativeSelect,
+  NativeSelectOptGroup,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { NodeOption } from "@/server/queries";
-import { emptyActionState } from "@/server/action-state";
+import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { createPostAction } from "@/server/actions/community";
 
 type PostFormProps = {
@@ -27,35 +31,35 @@ export function PostForm({ nodes }: PostFormProps) {
         </div>
       ) : null}
       <Field>
-        <Label htmlFor="nodeId">节点</Label>
-        <Select id="nodeId" name="nodeId" required>
-          <option value="">选择发布节点</option>
+        <FieldLabel htmlFor="nodeId">节点</FieldLabel>
+        <NativeSelect className="w-full" id="nodeId" name="nodeId" required>
+          <NativeSelectOption value="">选择发布节点</NativeSelectOption>
           {roots.map((root) => (
-            <optgroup key={root.id} label={root.name}>
-              <option value={root.id}>发到 {root.name}</option>
+            <NativeSelectOptGroup key={root.id} label={root.name}>
+              <NativeSelectOption value={root.id}>发到 {root.name}</NativeSelectOption>
               {nodes
                 .filter((node) => node.parentId === root.id)
                 .map((child) => (
-                  <option key={child.id} value={child.id}>
+                  <NativeSelectOption key={child.id} value={child.id}>
                     {child.name}
-                  </option>
+                  </NativeSelectOption>
                 ))}
-            </optgroup>
+            </NativeSelectOptGroup>
           ))}
-        </Select>
-        <FieldHint>具体问题建议选择更精确的子节点。</FieldHint>
-        <FieldError message={state.errors?.nodeId} />
+        </NativeSelect>
+        <FieldDescription>具体问题建议选择更精确的子节点。</FieldDescription>
+        <FieldError errors={toFieldErrors(state.errors?.nodeId)} />
       </Field>
       <Field>
-        <Label htmlFor="title">标题</Label>
+        <FieldLabel htmlFor="title">标题</FieldLabel>
         <Input id="title" name="title" required maxLength={160} />
-        <FieldError message={state.errors?.title} />
+        <FieldError errors={toFieldErrors(state.errors?.title)} />
       </Field>
       <Field>
-        <Label htmlFor="content">正文</Label>
+        <FieldLabel htmlFor="content">正文</FieldLabel>
         <Textarea id="content" name="content" required rows={12} />
-        <FieldHint>第一阶段先使用纯文本/Markdown 风格输入。</FieldHint>
-        <FieldError message={state.errors?.content} />
+        <FieldDescription>第一阶段先使用纯文本/Markdown 风格输入。</FieldDescription>
+        <FieldError errors={toFieldErrors(state.errors?.content)} />
       </Field>
       <SubmitButton pendingText="正在发布...">发布主题</SubmitButton>
     </form>

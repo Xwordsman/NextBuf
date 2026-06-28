@@ -5,6 +5,10 @@ export type ActionState = {
 
 export const emptyActionState: ActionState = {};
 
+export function toFieldErrors(messages?: string[]) {
+  return messages?.map((message) => ({ message }));
+}
+
 export function formValue(formData: FormData, key: string) {
   const value = formData.get(key);
 

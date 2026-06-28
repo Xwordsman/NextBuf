@@ -3,9 +3,9 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
-import { Field, FieldError, Label } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { emptyActionState } from "@/server/action-state";
+import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { createReplyAction } from "@/server/actions/community";
 
 export function ReplyForm({ postId }: { postId: string }) {
@@ -20,9 +20,9 @@ export function ReplyForm({ postId }: { postId: string }) {
         </div>
       ) : null}
       <Field>
-        <Label htmlFor="content">回复</Label>
+        <FieldLabel htmlFor="content">回复</FieldLabel>
         <Textarea id="content" name="content" required rows={5} />
-        <FieldError message={state.errors?.content} />
+        <FieldError errors={toFieldErrors(state.errors?.content)} />
       </Field>
       <SubmitButton pendingText="正在回复...">发布回复</SubmitButton>
     </form>

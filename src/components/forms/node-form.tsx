@@ -3,11 +3,11 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
-import { Field, FieldError, FieldHint, Label } from "@/components/ui/field";
+import { Field, FieldError, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { emptyActionState } from "@/server/action-state";
+import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { createNodeAction } from "@/server/actions/admin";
 import type { NodeOption } from "@/server/queries";
 
@@ -27,55 +27,60 @@ export function NodeForm({ roots }: NodeFormProps) {
       ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         <Field>
-          <Label htmlFor="name">节点名称</Label>
+          <FieldLabel htmlFor="name">节点名称</FieldLabel>
           <Input id="name" name="name" required />
-          <FieldError message={state.errors?.name} />
+          <FieldError errors={toFieldErrors(state.errors?.name)} />
         </Field>
         <Field>
-          <Label htmlFor="slug">Slug</Label>
+          <FieldLabel htmlFor="slug">Slug</FieldLabel>
           <Input id="slug" name="slug" placeholder="openai-api" />
-          <FieldHint>留空时会尽量根据名称生成。</FieldHint>
-          <FieldError message={state.errors?.slug} />
+          <FieldDescription>留空时会尽量根据名称生成。</FieldDescription>
+          <FieldError errors={toFieldErrors(state.errors?.slug)} />
         </Field>
       </div>
       <Field>
-        <Label htmlFor="description">简介</Label>
+        <FieldLabel htmlFor="description">简介</FieldLabel>
         <Textarea id="description" name="description" rows={3} />
-        <FieldError message={state.errors?.description} />
+        <FieldError errors={toFieldErrors(state.errors?.description)} />
       </Field>
       <div className="grid gap-4 md:grid-cols-4">
         <Field>
-          <Label htmlFor="parentId">所属一级节点</Label>
-          <Select id="parentId" name="parentId">
-            <option value="">作为一级节点</option>
+          <FieldLabel htmlFor="parentId">所属一级节点</FieldLabel>
+          <NativeSelect className="w-full" id="parentId" name="parentId">
+            <NativeSelectOption value="">作为一级节点</NativeSelectOption>
             {roots.map((root) => (
-              <option key={root.id} value={root.id}>
+              <NativeSelectOption key={root.id} value={root.id}>
                 {root.name}
-              </option>
+              </NativeSelectOption>
             ))}
-          </Select>
-          <FieldError message={state.errors?.parentId} />
+          </NativeSelect>
+          <FieldError errors={toFieldErrors(state.errors?.parentId)} />
         </Field>
         <Field>
-          <Label htmlFor="postingMode">发帖策略</Label>
-          <Select id="postingMode" name="postingMode" defaultValue="open">
-            <option value="open">开放</option>
-            <option value="admin_only">仅管理员</option>
-          </Select>
-          <FieldError message={state.errors?.postingMode} />
+          <FieldLabel htmlFor="postingMode">发帖策略</FieldLabel>
+          <NativeSelect
+            className="w-full"
+            id="postingMode"
+            name="postingMode"
+            defaultValue="open"
+          >
+            <NativeSelectOption value="open">开放</NativeSelectOption>
+            <NativeSelectOption value="admin_only">仅管理员</NativeSelectOption>
+          </NativeSelect>
+          <FieldError errors={toFieldErrors(state.errors?.postingMode)} />
         </Field>
         <Field>
-          <Label htmlFor="status">状态</Label>
-          <Select id="status" name="status" defaultValue="active">
-            <option value="active">启用</option>
-            <option value="hidden">隐藏</option>
-          </Select>
-          <FieldError message={state.errors?.status} />
+          <FieldLabel htmlFor="status">状态</FieldLabel>
+          <NativeSelect className="w-full" id="status" name="status" defaultValue="active">
+            <NativeSelectOption value="active">启用</NativeSelectOption>
+            <NativeSelectOption value="hidden">隐藏</NativeSelectOption>
+          </NativeSelect>
+          <FieldError errors={toFieldErrors(state.errors?.status)} />
         </Field>
         <Field>
-          <Label htmlFor="sortOrder">排序</Label>
+          <FieldLabel htmlFor="sortOrder">排序</FieldLabel>
           <Input id="sortOrder" name="sortOrder" type="number" min={0} defaultValue={0} />
-          <FieldError message={state.errors?.sortOrder} />
+          <FieldError errors={toFieldErrors(state.errors?.sortOrder)} />
         </Field>
       </div>
       <SubmitButton pendingText="正在创建...">创建节点</SubmitButton>

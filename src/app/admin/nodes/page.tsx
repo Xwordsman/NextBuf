@@ -37,12 +37,19 @@ export default async function AdminNodesPage() {
                     {node.parentId ? "  " : ""}
                     {node.name}
                   </span>
-                  <Badge tone={node.status === "active" ? "success" : "muted"}>
+                  <Badge
+                    variant={node.status === "active" ? "outline" : "secondary"}
+                    className={
+                      node.status === "active"
+                        ? "border-success/25 bg-success/10 text-success"
+                        : undefined
+                    }
+                  >
                     {node.status}
                   </Badge>
-                  <Badge tone="muted">{node.postingMode}</Badge>
+                  <Badge variant="secondary">{node.postingMode}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-muted">/{node.slug}</p>
+                <p className="mt-1 text-xs text-muted-foreground">/{node.slug}</p>
               </div>
               <form action={updateNodeStatusAction}>
                 <input type="hidden" name="id" value={node.id} />

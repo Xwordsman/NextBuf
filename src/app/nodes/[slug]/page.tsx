@@ -40,15 +40,15 @@ export default async function NodeDetailPage({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="mb-2 flex flex-wrap gap-2">
-                  <Badge tone={node.parentId ? "muted" : "default"}>
+                  <Badge variant={node.parentId ? "secondary" : "default"}>
                     {node.parentId ? "二级节点" : "一级节点"}
                   </Badge>
-                  <Badge tone={node.postingMode === "admin_only" ? "accent" : "muted"}>
+                  <Badge variant={node.postingMode === "admin_only" ? "default" : "secondary"}>
                     {node.postingMode === "admin_only" ? "仅管理员发帖" : "开放发帖"}
                   </Badge>
                 </div>
                 <h1 className="text-2xl font-semibold">{node.name}</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                   {node.description ?? "这个节点还没有简介。"}
                 </p>
               </div>

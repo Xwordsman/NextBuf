@@ -26,7 +26,7 @@ export default async function AdminPage() {
         {items.map(([label, value]) => (
           <Card key={label}>
             <CardHeader>
-              <p className="text-sm text-muted">{label}</p>
+              <p className="text-sm text-muted-foreground">{label}</p>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-semibold">{value}</div>
@@ -53,7 +53,7 @@ export default async function AdminPage() {
 function RuntimeItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[var(--radius-control)] border border-border bg-panel-muted p-3">
-      <p className="text-xs text-muted">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 break-all font-mono text-sm">{value}</p>
     </div>
   );

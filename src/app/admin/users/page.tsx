@@ -23,15 +23,22 @@ export default async function AdminUsersPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{user.username}</span>
-                <Badge tone={user.status === "active" ? "success" : "muted"}>
+                <Badge
+                  variant={user.status === "active" ? "outline" : "secondary"}
+                  className={
+                    user.status === "active"
+                      ? "border-success/25 bg-success/10 text-success"
+                      : undefined
+                  }
+                >
                   {user.status}
                 </Badge>
-                <Badge tone={user.role === "admin" ? "accent" : "muted"}>
+                <Badge variant={user.role === "admin" ? "default" : "secondary"}>
                   {user.role}
                 </Badge>
-                <Badge tone="muted">L{user.trustLevel}</Badge>
+                <Badge variant="secondary">L{user.trustLevel}</Badge>
               </div>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {user.email} · {formatDateTime(user.createdAt)}
               </p>
             </div>

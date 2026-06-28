@@ -17,7 +17,7 @@ export function SiteFooter() {
   const buildTime = runtime.buildTime ?? "unknown";
 
   return (
-    <footer className="border-t border-border bg-panel text-xs text-muted">
+    <footer className="border-t border-border bg-panel text-xs text-muted-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium">
@@ -44,7 +44,7 @@ export function SiteFooter() {
             </a>
           </nav>
 
-          <div className="inline-flex items-center gap-2 text-muted">
+          <div className="inline-flex items-center gap-2 text-muted-foreground">
             <Languages size={15} />
             <span>Select Language</span>
             <span className="text-border">·</span>
@@ -55,7 +55,7 @@ export function SiteFooter() {
         <div className="space-y-2 leading-6">
           <p className="text-sm text-foreground/80">创作者们的轻社区</p>
           <p>NextBuf is powered by focused discussions.</p>
-          <p className="font-mono uppercase tracking-normal text-muted">
+          <p className="font-mono uppercase tracking-normal text-muted-foreground">
             VERSION: {runtime.version} · ENV: {runtime.nodeEnv} · BUILD: {buildTime} ·
             COMMIT: {commit}
           </p>

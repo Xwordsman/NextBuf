@@ -19,7 +19,7 @@ export default async function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <h1 className="text-xl font-semibold">登录 NextBuf</h1>
-          <p className="mt-1 text-sm text-muted">回到社区继续讨论。</p>
+          <p className="mt-1 text-sm text-muted-foreground">回到社区继续讨论。</p>
         </CardHeader>
         <CardContent>
           <LoginForm />

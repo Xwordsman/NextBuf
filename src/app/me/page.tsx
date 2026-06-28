@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getCurrentUser, requireUser } from "@/server/auth";
 import { getUserBookmarks, getUserPosts, getUserReplies } from "@/server/queries";
@@ -32,11 +32,11 @@ export default async function MePage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold">我的空间</h1>
-              <p className="mt-1 text-sm text-muted">查看你的主题、回复和收藏。</p>
+              <p className="mt-1 text-sm text-muted-foreground">查看你的主题、回复和收藏。</p>
             </div>
-            <Link href="/me/settings" className={buttonClassName({ variant: "secondary" })}>
-              编辑资料
-            </Link>
+            <Button asChild variant="secondary">
+              <Link href="/me/settings">编辑资料</Link>
+            </Button>
           </div>
 
           <Card>
@@ -56,7 +56,7 @@ export default async function MePage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {replies.length === 0 ? (
-                <p className="text-sm text-muted">你还没有回复。</p>
+                <p className="text-sm text-muted-foreground">你还没有回复。</p>
               ) : (
                 replies.slice(0, 8).map((reply) => (
                   <Link
@@ -65,11 +65,11 @@ export default async function MePage() {
                     className="block rounded-[var(--radius-control)] border border-border p-3 transition-colors duration-200 hover:border-primary/40"
                   >
                     <div className="line-clamp-2 text-sm">{reply.content}</div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
-                      <Badge tone="muted">{reply.likeCount} 赞</Badge>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="secondary">{reply.likeCount} 赞</Badge>
                       <span>{formatDateTime(reply.createdAt)}</span>
                     </div>
-                    <div className="mt-2 line-clamp-1 text-xs text-muted">
+                    <div className="mt-2 line-clamp-1 text-xs text-muted-foreground">
                       {reply.postTitle}
                     </div>
                   </Link>
@@ -82,12 +82,12 @@ export default async function MePage() {
             <CardHeader className="flex-row items-center justify-between">
               <h2 className="font-semibold">收藏</h2>
               <Link href="/me/bookmarks">
-                <Badge tone="muted">全部</Badge>
+                <Badge variant="secondary">全部</Badge>
               </Link>
             </CardHeader>
             <CardContent className="space-y-2">
               {bookmarks.length === 0 ? (
-                <p className="text-sm text-muted">暂无收藏。</p>
+                <p className="text-sm text-muted-foreground">暂无收藏。</p>
               ) : (
                 bookmarks.slice(0, 6).map((post) => (
                   <Link

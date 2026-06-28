@@ -41,14 +41,14 @@ export function ContentActions({
           <Button
             type="submit"
             size="sm"
-            variant={viewerHasLiked ? "primary" : "secondary"}
+            variant={viewerHasLiked ? "default" : "secondary"}
           >
             <ThumbsUp size={15} />
             {viewerHasLiked ? "已赞" : "点赞"} {likeCount}
           </Button>
         </form>
       ) : (
-        <span className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-control)] border border-border px-3 text-xs text-muted">
+        <span className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-control)] border border-border px-3 text-xs text-muted-foreground">
           <ThumbsUp size={15} />
           点赞 {likeCount}
         </span>
@@ -59,7 +59,7 @@ export function ContentActions({
           <Button
             type="submit"
             size="sm"
-            variant={viewerHasBookmarked ? "primary" : "secondary"}
+            variant={viewerHasBookmarked ? "default" : "secondary"}
           >
             <Bookmark size={15} />
             {viewerHasBookmarked ? "已收藏" : "收藏"}
@@ -69,7 +69,7 @@ export function ContentActions({
 
       {canReport ? (
         <details className="group w-full sm:w-auto">
-          <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] border border-border px-3 text-xs font-medium text-muted transition-colors duration-200 hover:bg-panel-muted hover:text-foreground">
+          <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] border border-border px-3 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:bg-panel-muted hover:text-foreground">
             <Flag size={15} />
             举报
           </summary>

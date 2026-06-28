@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/server/auth";
@@ -32,7 +32,7 @@ export default async function SearchPage({
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5">
         <div className="mb-4">
           <h1 className="text-2xl font-semibold">搜索</h1>
-          <p className="mt-1 text-sm text-muted">查找标题和正文中的公开主题。</p>
+          <p className="mt-1 text-sm text-muted-foreground">查找标题和正文中的公开主题。</p>
         </div>
 
         <Card className="mb-4">
@@ -41,7 +41,7 @@ export default async function SearchPage({
               <div className="relative flex-1">
                 <Search
                   size={17}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 />
                 <Input
                   name="q"
@@ -50,15 +50,13 @@ export default async function SearchPage({
                   className="pl-9"
                 />
               </div>
-              <button className={buttonClassName({ variant: "primary" })}>
-                搜索
-              </button>
+              <Button type="submit">搜索</Button>
             </form>
           </CardContent>
         </Card>
 
         {keyword.length > 0 && keyword.length < 2 ? (
-          <Card className="p-8 text-center text-sm text-muted">
+          <Card className="p-8 text-center text-sm text-muted-foreground">
             请输入至少 2 个字符。
           </Card>
         ) : (

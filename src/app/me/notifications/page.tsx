@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   markAllNotificationsReadAction,
@@ -34,14 +34,14 @@ export default async function NotificationsPage() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold">通知</h1>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-muted-foreground">
               回复和点赞会出现在这里，未读 {unreadCount} 条。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/me/bookmarks" className={buttonClassName({ variant: "secondary" })}>
-              我的收藏
-            </Link>
+            <Button asChild variant="secondary">
+              <Link href="/me/bookmarks">我的收藏</Link>
+            </Button>
             <form action={markAllNotificationsReadAction}>
               <Button type="submit" variant="secondary">
                 全部已读
@@ -56,7 +56,7 @@ export default async function NotificationsPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {notifications.length === 0 ? (
-              <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted">
+              <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted-foreground">
                 暂时没有通知。
               </div>
             ) : (
@@ -67,10 +67,10 @@ export default async function NotificationsPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone={item.readAt ? "muted" : "accent"}>
+                      <Badge variant={item.readAt ? "secondary" : "default"}>
                         {item.readAt ? "已读" : "未读"}
                       </Badge>
-                      <span className="text-xs text-muted">
+                      <span className="text-xs text-muted-foreground">
                         {formatDateTime(item.createdAt)}
                       </span>
                     </div>

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProfileForm } from "@/components/forms/profile-form";
 import { SiteHeader } from "@/components/site-header";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getCurrentUser, requireUser } from "@/server/auth";
 import { getUserProfile } from "@/server/queries";
@@ -32,11 +32,11 @@ export default async function ProfileSettingsPage() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold">资料设置</h1>
-            <p className="mt-1 text-sm text-muted">维护你的公开头像和简介。</p>
+            <p className="mt-1 text-sm text-muted-foreground">维护你的公开头像和简介。</p>
           </div>
-          <Link href="/me" className={buttonClassName({ variant: "secondary" })}>
-            返回我的空间
-          </Link>
+          <Button asChild variant="secondary">
+            <Link href="/me">返回我的空间</Link>
+          </Button>
         </div>
 
         <Card>

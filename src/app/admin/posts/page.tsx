@@ -27,11 +27,18 @@ export default async function AdminPostsPage() {
                 <Link href={`/posts/${post.id}`} className="font-medium hover:text-primary">
                   {post.title}
                 </Link>
-                <Badge tone={post.status === "published" ? "success" : "muted"}>
+                <Badge
+                  variant={post.status === "published" ? "outline" : "secondary"}
+                  className={
+                    post.status === "published"
+                      ? "border-success/25 bg-success/10 text-success"
+                      : undefined
+                  }
+                >
                   {post.status}
                 </Badge>
               </div>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {post.nodeName} · {post.authorUsername} · {formatDateTime(post.createdAt)}
               </p>
             </div>

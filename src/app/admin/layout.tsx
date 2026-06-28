@@ -23,7 +23,7 @@ export default async function AdminLayout({
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               <Link href="/" className="hover:text-primary">
                 返回前台
               </Link>

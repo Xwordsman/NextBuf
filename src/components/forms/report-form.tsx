@@ -3,10 +3,10 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
-import { Field, FieldError, Label } from "@/components/ui/field";
-import { Select } from "@/components/ui/select";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { emptyActionState } from "@/server/action-state";
+import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { reportContentAction } from "@/server/actions/community";
 
 type ReportFormProps = {
@@ -31,19 +31,25 @@ export function ReportForm({ targetType, targetId, postId }: ReportFormProps) {
       ) : null}
 
       <Field>
-        <Label htmlFor={`reason-${targetId}`}>举报原因</Label>
-        <Select id={`reason-${targetId}`} name="reason" required defaultValue="spam">
-          <option value="spam">垃圾广告</option>
-          <option value="abuse">攻击辱骂</option>
-          <option value="illegal">违法违规</option>
-          <option value="off_topic">偏离主题</option>
-          <option value="other">其他</option>
-        </Select>
-        <FieldError message={state.errors?.reason} />
+        <FieldLabel htmlFor={`reason-${targetId}`}>举报原因</FieldLabel>
+        <NativeSelect
+          className="w-full"
+          id={`reason-${targetId}`}
+          name="reason"
+          required
+          defaultValue="spam"
+        >
+          <NativeSelectOption value="spam">垃圾广告</NativeSelectOption>
+          <NativeSelectOption value="abuse">攻击辱骂</NativeSelectOption>
+          <NativeSelectOption value="illegal">违法违规</NativeSelectOption>
+          <NativeSelectOption value="off_topic">偏离主题</NativeSelectOption>
+          <NativeSelectOption value="other">其他</NativeSelectOption>
+        </NativeSelect>
+        <FieldError errors={toFieldErrors(state.errors?.reason)} />
       </Field>
 
       <Field>
-        <Label htmlFor={`detail-${targetId}`}>补充说明</Label>
+        <FieldLabel htmlFor={`detail-${targetId}`}>补充说明</FieldLabel>
         <Textarea
           id={`detail-${targetId}`}
           name="detail"
@@ -51,7 +57,7 @@ export function ReportForm({ targetType, targetId, postId }: ReportFormProps) {
           className="min-h-24"
           placeholder="可选，简要说明问题"
         />
-        <FieldError message={state.errors?.detail} />
+        <FieldError errors={toFieldErrors(state.errors?.detail)} />
       </Field>
 
       <SubmitButton size="sm" variant="secondary" pendingText="正在提交...">

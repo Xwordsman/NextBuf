@@ -27,12 +27,19 @@ export default async function AdminRepliesPage() {
                 <Link href={`/posts/${reply.postId}`} className="font-medium hover:text-primary">
                   {reply.postTitle}
                 </Link>
-                <Badge tone={reply.status === "published" ? "success" : "muted"}>
+                <Badge
+                  variant={reply.status === "published" ? "outline" : "secondary"}
+                  className={
+                    reply.status === "published"
+                      ? "border-success/25 bg-success/10 text-success"
+                      : undefined
+                  }
+                >
                   {reply.status}
                 </Badge>
               </div>
-              <p className="mt-1 line-clamp-2 text-sm text-muted">{reply.content}</p>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{reply.content}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 {reply.authorUsername} · {formatDateTime(reply.createdAt)}
               </p>
             </div>

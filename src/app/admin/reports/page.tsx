@@ -24,13 +24,13 @@ export default async function AdminReportsPage() {
     <Card>
       <CardHeader>
         <h2 className="font-semibold">举报队列</h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           优先处理未决举报，必要时可直接隐藏相关内容。
         </p>
       </CardHeader>
       <CardContent className="space-y-2">
         {reports.length === 0 ? (
-          <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted">
+          <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted-foreground">
             暂时没有举报。
           </div>
         ) : (
@@ -42,15 +42,15 @@ export default async function AdminReportsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={report.status === "pending" ? "danger" : "muted"}>
+                    <Badge variant={report.status === "pending" ? "destructive" : "secondary"}>
                       {report.status}
                     </Badge>
-                    <Badge tone="muted">{report.targetType}</Badge>
+                    <Badge variant="secondary">{report.targetType}</Badge>
                     <span className="text-sm font-medium">
                       {reasonLabels[report.reason] ?? report.reason}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-muted">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     举报人 {report.reporterUsername} · {formatDateTime(report.createdAt)}
                   </p>
                   <p className="mt-2 text-sm">
@@ -59,7 +59,7 @@ export default async function AdminReportsPage() {
                       : report.replyContent ?? "回复已不可见"}
                   </p>
                   {report.detail ? (
-                    <p className="mt-2 rounded-[var(--radius-control)] bg-panel-muted p-3 text-sm text-muted">
+                    <p className="mt-2 rounded-[var(--radius-control)] bg-panel-muted p-3 text-sm text-muted-foreground">
                       {report.detail}
                     </p>
                   ) : null}
@@ -105,7 +105,7 @@ function ReportAction({
       <Button
         type="submit"
         size="sm"
-        variant={resolution === "hide" ? "danger" : "secondary"}
+        variant={resolution === "hide" ? "destructive" : "secondary"}
       >
         {label}
       </Button>

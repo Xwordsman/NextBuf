@@ -21,7 +21,7 @@ export default async function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <h1 className="text-xl font-semibold">注册账号</h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             {settings?.allowRegistration ? "创建账号后即可发帖回复。" : "当前站点暂未开放注册。"}
           </p>
         </CardHeader>

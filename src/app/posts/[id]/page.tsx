@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { ContentActions } from "@/components/content-actions";
 import { ReplyForm } from "@/components/forms/reply-form";
 import { SiteHeader } from "@/components/site-header";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth";
 import { getPostDetails } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, getInitial } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -41,13 +41,15 @@ export default async function PostDetailPage({
         <Card className="mb-4">
           <CardContent>
             <div className="flex gap-3">
-              <Avatar name={post.authorUsername} />
+              <Avatar>
+                <AvatarFallback>{getInitial(post.authorUsername)}</AvatarFallback>
+              </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Link href={`/nodes/${post.nodeSlug}`}>
-                    <Badge tone="muted">{post.nodeName}</Badge>
+                    <Badge variant="secondary">{post.nodeName}</Badge>
                   </Link>
-                  <span className="text-xs text-muted">
+                  <span className="text-xs text-muted-foreground">
                     {post.authorUsername} · {formatDateTime(post.createdAt)}
                   </span>
                 </div>
@@ -79,9 +81,11 @@ export default async function PostDetailPage({
             <Card key={reply.id}>
               <CardContent>
                 <div className="flex gap-3">
-                  <Avatar name={reply.authorUsername} size="sm" />
+                  <Avatar size="sm">
+                    <AvatarFallback>{getInitial(reply.authorUsername)}</AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">
                         {reply.authorUsername}
                       </span>
@@ -110,7 +114,7 @@ export default async function PostDetailPage({
             {user ? (
               <ReplyForm postId={post.id} />
             ) : (
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 <Link href="/login" className="font-medium text-primary">
                   登录
                 </Link>

@@ -15,7 +15,7 @@ export default async function InstallPage() {
             N
           </div>
           <h1 className="text-2xl font-semibold">安装 NextBuf</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted-foreground">
             填写站点信息并创建第一个管理员账号。
           </p>
         </div>

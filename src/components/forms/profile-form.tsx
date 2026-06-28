@@ -3,10 +3,10 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
-import { Field, FieldError, FieldHint, Label } from "@/components/ui/field";
+import { Field, FieldError, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { emptyActionState } from "@/server/action-state";
+import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { updateProfileAction } from "@/server/actions/community";
 
 type ProfileFormProps = {
@@ -28,7 +28,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       ) : null}
 
       <Field>
-        <Label htmlFor="avatarUrl">头像 URL</Label>
+        <FieldLabel htmlFor="avatarUrl">头像 URL</FieldLabel>
         <Input
           id="avatarUrl"
           name="avatarUrl"
@@ -36,12 +36,12 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           placeholder="https://example.com/avatar.png"
           defaultValue={profile.avatarUrl ?? ""}
         />
-        <FieldHint>可选。当前阶段先使用外链头像，后续再接对象存储上传。</FieldHint>
-        <FieldError message={state.errors?.avatarUrl} />
+        <FieldDescription>可选。当前阶段先使用外链头像，后续再接对象存储上传。</FieldDescription>
+        <FieldError errors={toFieldErrors(state.errors?.avatarUrl)} />
       </Field>
 
       <Field>
-        <Label htmlFor="bio">个人简介</Label>
+        <FieldLabel htmlFor="bio">个人简介</FieldLabel>
         <Textarea
           id="bio"
           name="bio"
@@ -49,7 +49,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           placeholder="简单介绍一下你自己"
           defaultValue={profile.bio ?? ""}
         />
-        <FieldError message={state.errors?.bio} />
+        <FieldError errors={toFieldErrors(state.errors?.bio)} />
       </Field>
 
       <SubmitButton pendingText="正在保存...">保存资料</SubmitButton>

@@ -15,7 +15,7 @@ export default async function AdminSettingsPage() {
     <Card>
       <CardHeader>
         <h2 className="font-semibold">站点设置</h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           第一阶段提供站点基础信息和开放注册开关。
         </p>
       </CardHeader>
