@@ -1,6 +1,6 @@
 services:
   web:
-    image: ${NEXTBUF_IMAGE:-nextbuf:local}
+    image: ${NEXTBUF_IMAGE:-ghcr.io/xwordsman/nextbuf:latest}
     restart: unless-stopped
     environment:
       NODE_ENV: production

@@ -44,9 +44,10 @@ GitHub 个人主页 -> Packages -> nextbuf -> Package settings -> Manage Actions
 ```text
 POSTGRES_PASSWORD
 DATABASE_URL
-NEXTBUF_IMAGE
 NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
 ```
+
+`NEXTBUF_IMAGE` 默认是 `ghcr.io/xwordsman/nextbuf:latest`，一般不用填写；只有需要切换测试镜像或私有镜像时再覆盖。
 
 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` 可用以下命令生成：
 

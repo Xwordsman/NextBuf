@@ -53,7 +53,7 @@ npm run db:migrate
 
 ```bash
 docker build -t nextbuf:local .
-docker compose up -d
+NEXTBUF_IMAGE=nextbuf:local docker compose up -d
 ```
 
 Web 容器启动时会自动执行数据库迁移，然后启动 Next.js。
