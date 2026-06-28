@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type FeedTabKey = "latest" | "popular";
 
@@ -19,25 +19,21 @@ type FeedTabsProps = {
 
 export function FeedTabs({ active }: FeedTabsProps) {
   return (
-    <nav
-      aria-label="主题筛选"
-      className="flex gap-1 overflow-x-auto border-b border-border bg-muted/35 px-2 py-2"
-    >
-      {feedTabs.map((tab) => (
-        <Link
-          key={tab.key}
-          href={tab.href}
-          aria-current={active === tab.key ? "page" : undefined}
-          className={cn(
-            "shrink-0 rounded-[var(--radius-control)] px-3 py-1.5 text-sm transition-colors duration-200",
-            active === tab.key
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-background hover:text-foreground",
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
-    </nav>
+    <Tabs value={active} className="gap-0 border-b border-border bg-muted/35 px-2 py-2">
+      <TabsList aria-label="主题筛选" className="h-8 bg-transparent p-0">
+        {feedTabs.map((tab) => (
+          <TabsTrigger
+            key={tab.key}
+            value={tab.key}
+            asChild
+            className="flex-none rounded-[var(--radius-control)] px-3 py-1.5"
+          >
+            <Link href={tab.href} aria-current={active === tab.key ? "page" : undefined}>
+              {tab.label}
+            </Link>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
