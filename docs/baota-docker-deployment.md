@@ -66,6 +66,8 @@ openssl rand -base64 32
 5. 上传或填写 `.env` 环境变量。
 6. 启动编排。
 
+默认只暴露 Web 端口 `3050`。PostgreSQL 和 Redis 仅在 Docker 内网中给 Web 容器访问，不映射到服务器宿主机端口，避免与服务器已有数据库服务冲突。
+
 首次启动时，Web 容器会先执行：
 
 ```text
