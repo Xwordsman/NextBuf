@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { LayoutDashboard, LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import {
+  Bell,
+  Bookmark,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  PenLine,
+  Search,
+  UserPlus,
+} from "lucide-react";
 
 import { logoutAction } from "@/server/actions/auth";
 import type { CurrentUser } from "@/server/auth";
@@ -29,6 +38,13 @@ export function SiteHeader({ settings, user }: SiteHeaderProps) {
           <Link className="rounded-[var(--radius-control)] px-3 py-2 hover:bg-panel-muted hover:text-foreground" href="/">
             最新
           </Link>
+          <Link className="rounded-[var(--radius-control)] px-3 py-2 hover:bg-panel-muted hover:text-foreground" href="/popular">
+            热门
+          </Link>
+          <Link className="inline-flex items-center gap-1 rounded-[var(--radius-control)] px-3 py-2 hover:bg-panel-muted hover:text-foreground" href="/search">
+            <Search size={14} />
+            搜索
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -51,7 +67,21 @@ export function SiteHeader({ settings, user }: SiteHeaderProps) {
                 </Link>
               ) : null}
               <Link
-                href={`/users/${user.username}`}
+                href="/me/notifications"
+                className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
+              >
+                <Bell size={15} />
+                通知
+              </Link>
+              <Link
+                href="/me/bookmarks"
+                className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
+              >
+                <Bookmark size={15} />
+                收藏
+              </Link>
+              <Link
+                href="/me"
                 className="min-h-9 rounded-[var(--radius-control)] px-3 py-2 text-sm text-muted hover:bg-panel-muted hover:text-foreground"
               >
                 {user.username}

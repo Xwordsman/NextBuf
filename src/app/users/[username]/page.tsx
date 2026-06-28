@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth";
@@ -38,14 +39,17 @@ export default async function UserProfilePage({
         <Card className="mb-4">
           <CardContent>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h1 className="text-2xl font-semibold">{profile.username}</h1>
-                <p className="mt-2 text-sm text-muted">
-                  加入于 {formatDateTime(profile.createdAt)}
-                </p>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                  {profile.bio ?? "这个用户还没有填写简介。"}
-                </p>
+              <div className="flex gap-3">
+                <Avatar name={profile.username} src={profile.avatarUrl} />
+                <div>
+                  <h1 className="text-2xl font-semibold">{profile.username}</h1>
+                  <p className="mt-2 text-sm text-muted">
+                    加入于 {formatDateTime(profile.createdAt)}
+                  </p>
+                  <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
+                    {profile.bio ?? "这个用户还没有填写简介。"}
+                  </p>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Badge tone="muted">L{profile.trustLevel}</Badge>

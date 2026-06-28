@@ -5,7 +5,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { nodes, posts, replies, siteSettings, users } from "@/db/schema";
+import {
+  moderationLogs,
+  nodes,
+  posts,
+  replies,
+  reports,
+  siteSettings,
+  users,
+} from "@/db/schema";
 import { checkboxValue } from "@/server/action-state";
 import type { ActionState } from "@/server/action-state";
 import { requireAdmin } from "@/server/auth";
@@ -72,7 +80,7 @@ export async function createNodeAction(
 }
 
 export async function updateNodeStatusAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "active");
@@ -86,13 +94,17 @@ export async function updateNodeStatusAction(formData: FormData) {
     .set({ status, updatedAt: new Date() })
     .where(eq(nodes.id, id));
 
+  await writeModerationLog(admin.id, "node_status_updated", "node", id, {
+    status,
+  });
+
   revalidatePath("/");
   revalidatePath("/nodes");
   revalidatePath("/admin/nodes");
 }
 
 export async function updatePostStatusAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "published");
@@ -106,12 +118,18 @@ export async function updatePostStatusAction(formData: FormData) {
     .set({ status, updatedAt: new Date() })
     .where(eq(posts.id, id));
 
+  await writeModerationLog(admin.id, "post_status_updated", "post", id, {
+    status,
+  });
+
   revalidatePath("/");
+  revalidatePath("/popular");
   revalidatePath("/admin/posts");
+  revalidatePath(`/posts/${id}`);
 }
 
 export async function updateReplyStatusAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "published");
@@ -125,16 +143,20 @@ export async function updateReplyStatusAction(formData: FormData) {
     .set({ status, updatedAt: new Date() })
     .where(eq(replies.id, id));
 
+  await writeModerationLog(admin.id, "reply_status_updated", "reply", id, {
+    status,
+  });
+
   revalidatePath("/admin/replies");
 }
 
 export async function updateUserStatusAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "active");
 
-  if (!id || !["active", "disabled"].includes(status)) {
+  if (!id || id === admin.id || !["active", "disabled"].includes(status)) {
     return;
   }
 
@@ -143,7 +165,78 @@ export async function updateUserStatusAction(formData: FormData) {
     .set({ status, updatedAt: new Date() })
     .where(eq(users.id, id));
 
+  await writeModerationLog(admin.id, "user_status_updated", "user", id, {
+    status,
+  });
+
   revalidatePath("/admin/users");
+}
+
+export async function handleReportAction(formData: FormData) {
+  const admin = await requireAdmin();
+
+  const id = String(formData.get("id") || "");
+  const resolution = String(formData.get("resolution") || "");
+
+  if (!id || !["hide", "ignore", "resolve"].includes(resolution)) {
+    return;
+  }
+
+  const [report] = await db.select().from(reports).where(eq(reports.id, id)).limit(1);
+
+  if (!report || report.status !== "pending") {
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    if (resolution === "hide") {
+      if (report.targetType === "post") {
+        await tx
+          .update(posts)
+          .set({ status: "hidden", updatedAt: new Date() })
+          .where(eq(posts.id, report.targetId));
+      }
+
+      if (report.targetType === "reply") {
+        await tx
+          .update(replies)
+          .set({ status: "hidden", updatedAt: new Date() })
+          .where(eq(replies.id, report.targetId));
+      }
+    }
+
+    await tx
+      .update(reports)
+      .set({
+        status: resolution === "ignore" ? "ignored" : "resolved",
+        resolvedBy: admin.id,
+        resolvedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(reports.id, id));
+
+    await tx.insert(moderationLogs).values({
+      actorId: admin.id,
+      action: `report_${resolution}`,
+      targetType: report.targetType,
+      targetId: report.targetId,
+      metadata: {
+        reportId: report.id,
+        reason: report.reason,
+      },
+    });
+  });
+
+  revalidatePath("/");
+  revalidatePath("/popular");
+  revalidatePath("/admin");
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/posts");
+  revalidatePath("/admin/replies");
+
+  if (report.postId) {
+    revalidatePath(`/posts/${report.postId}`);
+  }
 }
 
 export async function updateSiteSettingsAction(
@@ -174,4 +267,20 @@ export async function updateSiteSettingsAction(
   revalidatePath("/");
   revalidatePath("/admin/settings");
   return { message: "站点设置已保存。" };
+}
+
+async function writeModerationLog(
+  actorId: string,
+  action: string,
+  targetType: string,
+  targetId: string,
+  metadata: Record<string, unknown>,
+) {
+  await db.insert(moderationLogs).values({
+    actorId,
+    action,
+    targetType,
+    targetId,
+    metadata,
+  });
 }

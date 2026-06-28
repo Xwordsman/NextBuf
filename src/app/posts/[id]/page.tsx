@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ContentActions } from "@/components/content-actions";
 import { ReplyForm } from "@/components/forms/reply-form";
 import { SiteHeader } from "@/components/site-header";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,11 +22,11 @@ export default async function PostDetailPage({
   await requireInstalled();
 
   const { id } = await params;
-  const [settings, user, detail] = await Promise.all([
+  const [settings, user] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
-    getPostDetails(id),
   ]);
+  const detail = await getPostDetails(id, user?.id);
 
   if (!detail) {
     notFound();
@@ -54,6 +55,16 @@ export default async function PostDetailPage({
                 <div className="content-body mt-5 text-[15px] text-foreground">
                   {post.content}
                 </div>
+                <ContentActions
+                  targetType="post"
+                  targetId={post.id}
+                  postId={post.id}
+                  likeCount={post.likeCount}
+                  viewerHasLiked={post.viewerHasLiked}
+                  viewerHasBookmarked={post.viewerHasBookmarked}
+                  canInteract={Boolean(user)}
+                  canReport={Boolean(user && user.id !== post.authorId)}
+                />
               </div>
             </div>
           </CardContent>
@@ -78,6 +89,15 @@ export default async function PostDetailPage({
                       <span>{formatDateTime(reply.createdAt)}</span>
                     </div>
                     <div className="content-body mt-3 text-sm">{reply.content}</div>
+                    <ContentActions
+                      targetType="reply"
+                      targetId={reply.id}
+                      postId={post.id}
+                      likeCount={reply.likeCount}
+                      viewerHasLiked={reply.viewerHasLiked}
+                      canInteract={Boolean(user)}
+                      canReport={Boolean(user && user.id !== reply.authorId)}
+                    />
                   </div>
                 </div>
               </CardContent>

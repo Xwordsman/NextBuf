@@ -2,8 +2,10 @@ import Link from "next/link";
 import {
   FileText,
   LayoutDashboard,
+  ListChecks,
   MessageSquare,
   Network,
+  ShieldAlert,
   Settings,
   Users,
 } from "lucide-react";
@@ -13,6 +15,8 @@ const navItems = [
   { href: "/admin/nodes", label: "节点", icon: Network },
   { href: "/admin/posts", label: "帖子", icon: FileText },
   { href: "/admin/replies", label: "回复", icon: MessageSquare },
+  { href: "/admin/reports", label: "举报", icon: ShieldAlert },
+  { href: "/admin/logs", label: "日志", icon: ListChecks },
   { href: "/admin/users", label: "用户", icon: Users },
   { href: "/admin/settings", label: "设置", icon: Settings },
 ];

@@ -178,6 +178,123 @@ export const replies = pgTable(
   ],
 );
 
+export const postLikes = pgTable(
+  "post_likes",
+  {
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({ columns: [table.postId, table.userId] }),
+    index("post_likes_user_idx").on(table.userId),
+  ],
+);
+
+export const replyLikes = pgTable(
+  "reply_likes",
+  {
+    replyId: uuid("reply_id")
+      .notNull()
+      .references(() => replies.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({ columns: [table.replyId, table.userId] }),
+    index("reply_likes_user_idx").on(table.userId),
+  ],
+);
+
+export const postBookmarks = pgTable(
+  "post_bookmarks",
+  {
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({ columns: [table.postId, table.userId] }),
+    index("post_bookmarks_user_idx").on(table.userId),
+  ],
+);
+
+export const reports = pgTable(
+  "reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reporterId: uuid("reporter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    targetType: varchar("target_type", { length: 24 }).notNull(),
+    targetId: uuid("target_id").notNull(),
+    postId: uuid("post_id").references(() => posts.id, { onDelete: "cascade" }),
+    reason: varchar("reason", { length: 80 }).notNull(),
+    detail: text("detail"),
+    status: varchar("status", { length: 24 }).notNull().default("pending"),
+    resolvedBy: uuid("resolved_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    index("reports_status_created_idx").on(table.status, table.createdAt),
+    index("reports_target_idx").on(table.targetType, table.targetId),
+    index("reports_reporter_idx").on(table.reporterId),
+  ],
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    type: varchar("type", { length: 40 }).notNull(),
+    postId: uuid("post_id").references(() => posts.id, { onDelete: "cascade" }),
+    replyId: uuid("reply_id").references(() => replies.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt,
+  },
+  (table) => [
+    index("notifications_user_created_idx").on(table.userId, table.createdAt),
+    index("notifications_user_read_idx").on(table.userId, table.readAt),
+  ],
+);
+
+export const moderationLogs = pgTable(
+  "moderation_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    action: varchar("action", { length: 60 }).notNull(),
+    targetType: varchar("target_type", { length: 24 }).notNull(),
+    targetId: uuid("target_id").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt,
+  },
+  (table) => [
+    index("moderation_logs_actor_idx").on(table.actorId),
+    index("moderation_logs_target_idx").on(table.targetType, table.targetId),
+    index("moderation_logs_created_idx").on(table.createdAt),
+  ],
+);
+
 export const tags = pgTable(
   "tags",
   {
@@ -226,3 +343,5 @@ export type Node = typeof nodes.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Reply = typeof replies.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
+export type Report = typeof reports.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;

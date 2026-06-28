@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/server/auth";
 import {
   getCommunityStats,
   getLatestPosts,
+  getPopularPosts,
   getPublicNodes,
 } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
@@ -20,10 +21,11 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   await requireInstalled();
 
-  const [settings, user, posts, nodes, stats] = await Promise.all([
+  const [settings, user, posts, popularPosts, nodes, stats] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getLatestPosts(),
+    getPopularPosts(5),
     getPublicNodes(),
     getCommunityStats(),
   ]);
@@ -78,6 +80,33 @@ export default async function Home() {
             </CardHeader>
             <CardContent>
               <NodeGrid nodes={nodes.slice(0, 8)} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <h2 className="font-semibold">热门</h2>
+              <Link href="/popular">
+                <Badge tone="muted">更多</Badge>
+              </Link>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {popularPosts.length === 0 ? (
+                <p className="text-sm text-muted">暂时没有热门主题。</p>
+              ) : (
+                popularPosts.map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/posts/${post.id}`}
+                    className="block rounded-[var(--radius-control)] border border-border p-3 transition-colors duration-200 hover:border-primary/40"
+                  >
+                    <div className="line-clamp-2 text-sm font-medium">{post.title}</div>
+                    <div className="mt-2 text-xs text-muted">
+                      {post.likeCount} 赞 · {post.replyCount} 回复
+                    </div>
+                  </Link>
+                ))
+              )}
             </CardContent>
           </Card>
         </aside>

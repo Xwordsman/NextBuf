@@ -8,6 +8,13 @@
       "when": 1782573507517,
       "tag": "0000_woozy_slyde",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782612619863,
+      "tag": "0001_brave_warstar",
+      "breakpoints": true
     }
   ]
 }

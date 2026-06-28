@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, ThumbsUp } from "lucide-react";
 
 import type { PostListItem } from "@/server/queries";
 import { Avatar } from "@/components/ui/avatar";
@@ -49,9 +49,15 @@ export function PostList({ posts, emptyText = "还没有帖子。" }: PostListPr
                 {post.title}
               </Link>
             </div>
-            <div className="flex min-w-14 items-center justify-end gap-1 text-sm text-muted">
-              <MessageSquare size={16} />
-              {post.replyCount}
+            <div className="flex min-w-20 flex-col items-end justify-center gap-1 text-sm text-muted sm:flex-row sm:items-center">
+              <span className="inline-flex items-center gap-1">
+                <ThumbsUp size={16} />
+                {post.likeCount}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <MessageSquare size={16} />
+                {post.replyCount}
+              </span>
             </div>
           </div>
         </article>

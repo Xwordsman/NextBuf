@@ -77,6 +77,9 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           push: true
+          build-args: |
+            NEXTBUF_COMMIT=${{ github.sha }}
+            NEXTBUF_BUILD_TIME=${{ github.event.head_commit.timestamp }}
           tags: |
             ${{ env.IMAGE_NAME }}:latest-${{ matrix.arch }}
             ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-${{ matrix.arch }}
