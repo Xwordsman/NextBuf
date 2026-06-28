@@ -52,7 +52,7 @@ function NodeNavLink({
       className={cn(
         "h-8 flex-none justify-start rounded-[var(--radius-control)] px-2.5 text-sm font-medium xl:w-full",
         active
-          ? "text-primary-foreground hover:text-primary-foreground"
+          ? "!text-white hover:!text-white [&_*]:!text-white"
           : "text-muted-foreground hover:text-foreground",
       )}
     >

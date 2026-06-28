@@ -38,7 +38,10 @@ export function HomeUserCard({ settings, user, stats }: HomeUserCardProps) {
         <CardContent className="grid grid-cols-2 gap-2">
           <Button
             asChild
-            className={cn(!(settings?.allowRegistration ?? true) && "col-span-2")}
+            className={cn(
+              "!text-white hover:!text-white [&_*]:!text-white",
+              !(settings?.allowRegistration ?? true) && "col-span-2",
+            )}
           >
             <Link href="/login">登录</Link>
           </Button>
@@ -116,7 +119,10 @@ export function HomeUserCard({ settings, user, stats }: HomeUserCardProps) {
           />
         </div>
 
-        <Button asChild className="w-full">
+        <Button
+          asChild
+          className="w-full !text-white hover:!text-white [&_*]:!text-white"
+        >
           <Link href="/posts/new">
             <PenLine />
             发表主题
