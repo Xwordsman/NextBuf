@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHash, randomBytes } from "crypto";
 import { and, eq, gt } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
@@ -24,6 +24,46 @@ function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function parseCookieSecureOverride() {
+  const value = process.env.NEXTBUF_COOKIE_SECURE?.trim().toLowerCase();
+
+  if (["1", "true", "yes", "on"].includes(value ?? "")) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(value ?? "")) {
+    return false;
+  }
+
+  return null;
+}
+
+async function shouldUseSecureCookie() {
+  const override = parseCookieSecureOverride();
+
+  if (override !== null) {
+    return override;
+  }
+
+  const headerStore = await headers();
+  const forwardedProto = headerStore
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    .toLowerCase();
+
+  if (forwardedProto) {
+    return forwardedProto === "https";
+  }
+
+  if (headerStore.get("x-forwarded-ssl")?.toLowerCase() === "on") {
+    return true;
+  }
+
+  const requestOrigin = headerStore.get("origin") ?? headerStore.get("referer");
+  return requestOrigin?.toLowerCase().startsWith("https://") ?? false;
+}
+
 export async function createSession(userId: string) {
   const token = randomBytes(32).toString("base64url");
   const tokenHash = hashSessionToken(token);
@@ -39,7 +79,7 @@ export async function createSession(userId: string) {
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: await shouldUseSecureCookie(),
     path: "/",
     expires: expiresAt,
   });

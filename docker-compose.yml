@@ -8,6 +8,7 @@ services:
       NEXT_TELEMETRY_DISABLED: 1
       DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-local}
       NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}
+      NEXTBUF_COOKIE_SECURE: ${NEXTBUF_COOKIE_SECURE:-auto}
       DATABASE_URL: ${DATABASE_URL:-postgres://nextbuf:nextbuf-change-me@postgres:5432/nextbuf}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       PORT: 3000
