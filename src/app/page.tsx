@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Activity, MessageSquare, Network, PenLine, Users } from "lucide-react";
+import { Activity, MessageSquare, Network, Users } from "lucide-react";
 
-import { NodeGrid } from "@/components/node-grid";
+import { FeedTabs } from "@/components/feed-tabs";
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -19,7 +18,6 @@ import {
   getCommunityStats,
   getLatestPosts,
   getPopularPosts,
-  getPublicNodes,
 } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
@@ -28,12 +26,11 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   await requireInstalled();
 
-  const [settings, user, posts, popularPosts, nodes, stats] = await Promise.all([
+  const [settings, user, posts, popularPosts, stats] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getLatestPosts(),
     getPopularPosts(5),
-    getPublicNodes(),
     getCommunityStats(),
   ]);
 
@@ -41,32 +38,15 @@ export default async function Home() {
     <>
       <SiteHeader settings={settings} user={user} />
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="space-y-3">
-          <Card size="sm">
-            <CardHeader className="gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">社区首页</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {stats.posts} 主题 / {stats.replies} 回复
-                  </span>
-                </div>
-                <CardTitle className="text-xl">最新主题</CardTitle>
-                <CardDescription>
-                  按最后回复时间浏览社区讨论，快速进入正在发生的内容。
-                </CardDescription>
-              </div>
-              <CardAction>
-                <Button asChild variant={user ? "default" : "secondary"} size="lg">
-                  <Link href={user ? "/posts/new" : "/login"}>
-                    <PenLine />
-                    {user ? "发布主题" : "登录后发帖"}
-                  </Link>
-                </Button>
-              </CardAction>
-            </CardHeader>
+        <section>
+          <Card className="gap-0 py-0">
+            <FeedTabs active="latest" />
+            <PostList
+              posts={posts}
+              emptyText="还没有主题，创建第一个节点后就可以发帖。"
+              embedded
+            />
           </Card>
-          <PostList posts={posts} emptyText="还没有主题，创建第一个节点后就可以发帖。" />
         </section>
 
         <aside className="space-y-4">
@@ -82,20 +62,6 @@ export default async function Home() {
               <StatItem icon={MessageSquare} label="主题" value={stats.posts} />
               <StatItem icon={Activity} label="回复" value={stats.replies} />
               <StatItem icon={Network} label="节点" value={stats.nodes} />
-            </CardContent>
-          </Card>
-
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>节点</CardTitle>
-              <CardAction>
-                <Badge asChild variant="secondary">
-                  <Link href="/nodes">全部</Link>
-                </Badge>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <NodeGrid nodes={nodes.slice(0, 8)} />
             </CardContent>
           </Card>
 

@@ -23,6 +23,7 @@ export default async function AdminUsersPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{user.username}</span>
+                <Badge variant="outline">UID {user.uid}</Badge>
                 <Badge
                   variant={user.status === "active" ? "outline" : "secondary"}
                   className={

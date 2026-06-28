@@ -5,6 +5,7 @@ import {
   jsonb,
   pgTable,
   primaryKey,
+  serial,
   text,
   timestamp,
   uniqueIndex,
@@ -25,6 +26,7 @@ export const users = pgTable(
   "users",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    uid: serial("uid").notNull(),
     username: varchar("username", { length: 40 }).notNull(),
     email: varchar("email", { length: 255 }).notNull(),
     passwordHash: text("password_hash").notNull(),
@@ -39,6 +41,7 @@ export const users = pgTable(
   (table) => [
     uniqueIndex("users_username_unique").on(table.username),
     uniqueIndex("users_email_unique").on(table.email),
+    uniqueIndex("users_uid_unique").on(table.uid),
     index("users_status_idx").on(table.status),
   ],
 );

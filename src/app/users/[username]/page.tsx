@@ -49,6 +49,9 @@ export default async function UserProfilePage({
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-semibold">{profile.username}</h1>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">
+                    UID {profile.uid}
+                  </p>
                   <p className="mt-2 text-sm text-muted-foreground">
                     加入于 {formatDateTime(profile.createdAt)}
                   </p>

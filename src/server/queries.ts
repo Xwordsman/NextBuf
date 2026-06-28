@@ -12,6 +12,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db } from "@/db";
 import {
@@ -27,6 +28,8 @@ import {
   siteSettings,
   users,
 } from "@/db/schema";
+
+const lastReplyUsers = alias(users, "last_reply_users");
 
 export type NodeOption = {
   id: string;
@@ -49,7 +52,9 @@ export type PostListItem = {
   nodeName: string;
   nodeSlug: string;
   authorUsername: string;
+  authorAvatarUrl: string | null;
   authorTrustLevel: number;
+  lastReplyUsername: string | null;
 };
 
 export type ReplyItem = {
@@ -126,11 +131,14 @@ export async function getLatestPosts(limit = 30): Promise<PostListItem[]> {
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(eq(posts.status, "published"))
     .orderBy(desc(posts.lastReplyAt), desc(posts.createdAt))
     .limit(limit);
@@ -149,11 +157,14 @@ export async function getPopularPosts(limit = 30): Promise<PostListItem[]> {
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(eq(posts.status, "published"))
     .orderBy(
       desc(sql<number>`${posts.likeCount} * 2 + ${posts.replyCount}`),
@@ -179,11 +190,14 @@ export async function getPostsForNode(nodeId: string, isRoot: boolean) {
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(and(condition, eq(posts.status, "published")))
     .orderBy(desc(posts.lastReplyAt), desc(posts.createdAt))
     .limit(50);
@@ -285,6 +299,7 @@ export async function getUserProfile(username: string) {
   const [profile] = await db
     .select({
       id: users.id,
+      uid: users.uid,
       username: users.username,
       avatarUrl: users.avatarUrl,
       bio: users.bio,
@@ -313,11 +328,14 @@ export async function getUserProfile(username: string) {
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(and(eq(posts.authorId, profile.id), eq(posts.status, "published")))
     .orderBy(desc(posts.createdAt))
     .limit(20);
@@ -411,6 +429,7 @@ export async function getAdminUsers() {
   return db
     .select({
       id: users.id,
+      uid: users.uid,
       username: users.username,
       email: users.email,
       role: users.role,
@@ -482,12 +501,15 @@ export async function getUserBookmarks(userId: string): Promise<PostListItem[]> 
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(postBookmarks)
     .innerJoin(posts, eq(postBookmarks.postId, posts.id))
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(and(eq(postBookmarks.userId, userId), eq(posts.status, "published")))
     .orderBy(desc(postBookmarks.createdAt))
     .limit(50);
@@ -506,11 +528,14 @@ export async function getUserPosts(userId: string): Promise<PostListItem[]> {
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(and(eq(posts.authorId, userId), eq(posts.status, "published")))
     .orderBy(desc(posts.createdAt))
     .limit(30);
@@ -592,11 +617,14 @@ export async function searchVisiblePosts(query: string) {
       nodeName: nodes.name,
       nodeSlug: nodes.slug,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
+      lastReplyUsername: lastReplyUsers.username,
     })
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(
       and(
         eq(posts.status, "published"),

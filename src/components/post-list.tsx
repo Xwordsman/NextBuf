@@ -1,66 +1,106 @@
 import Link from "next/link";
-import { MessageSquare, ThumbsUp } from "lucide-react";
 
 import type { PostListItem } from "@/server/queries";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime, getInitial } from "@/lib/utils";
+import { formatRelativeTime, getInitial } from "@/lib/utils";
 
 type PostListProps = {
   posts: PostListItem[];
   emptyText?: string;
+  embedded?: boolean;
 };
 
-export function PostList({ posts, emptyText = "还没有帖子。" }: PostListProps) {
+export function PostList({
+  posts,
+  emptyText = "还没有帖子。",
+  embedded = false,
+}: PostListProps) {
   if (posts.length === 0) {
     return (
-      <Card className="p-8 text-center text-sm text-muted-foreground">
+      <Card
+        className={
+          embedded
+            ? "rounded-none p-8 text-center text-sm text-muted-foreground ring-0"
+            : "p-8 text-center text-sm text-muted-foreground"
+        }
+      >
         {emptyText}
       </Card>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className={embedded ? "divide-y divide-border" : "space-y-2"}>
       {posts.map((post) => (
         <article
           key={post.id}
-          className="rounded-[var(--radius-base)] border border-border bg-panel p-4 transition-colors duration-200 hover:border-primary/40"
+          className={
+            embedded
+              ? "bg-panel px-3 py-3 transition-colors duration-200 hover:bg-muted/45 sm:px-4"
+              : "rounded-[var(--radius-base)] border border-border bg-panel p-4 transition-colors duration-200 hover:border-primary/40"
+          }
         >
-          <div className="flex gap-3">
-            <Avatar>
-              <AvatarFallback>{getInitial(post.authorUsername)}</AvatarFallback>
+          <div className="flex items-start gap-3">
+            <Avatar className="size-11 rounded-md after:rounded-md sm:size-12">
+              <AvatarImage
+                src={post.authorAvatarUrl ?? undefined}
+                alt={`${post.authorUsername} 的头像`}
+                className="rounded-md"
+              />
+              <AvatarFallback className="rounded-md">
+                {getInitial(post.authorUsername)}
+              </AvatarFallback>
             </Avatar>
+
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href={`/nodes/${post.nodeSlug}`}
-                  className="shrink-0"
-                >
-                  <Badge variant="secondary">{post.nodeName}</Badge>
-                </Link>
-                <span className="text-xs text-muted-foreground">
-                  {post.authorUsername} · {formatDateTime(post.lastReplyAt)}
-                </span>
-              </div>
               <Link
                 href={`/posts/${post.id}`}
-                className="mt-2 block text-base font-semibold leading-6 hover:text-primary"
+                className="block truncate text-[15px] font-medium leading-6 text-foreground hover:text-primary sm:text-base"
               >
                 {post.title}
               </Link>
+
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <Link href={`/nodes/${post.nodeSlug}`} className="shrink-0">
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[11px]">
+                    {post.nodeName}
+                  </Badge>
+                </Link>
+                <span className="text-xs text-muted-foreground">·</span>
+                <Link
+                  href={`/users/${post.authorUsername}`}
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {post.authorUsername}
+                </Link>
+                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatRelativeTime(post.lastReplyAt)}
+                </span>
+                {post.lastReplyUsername ? (
+                  <>
+                    <span className="text-xs text-muted-foreground">·</span>
+                    <span className="text-xs text-muted-foreground">最后回复</span>
+                    <Link
+                      href={`/users/${post.lastReplyUsername}`}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      {post.lastReplyUsername}
+                    </Link>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <div className="flex min-w-20 flex-col items-end justify-center gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center">
-              <span className="inline-flex items-center gap-1">
-                <ThumbsUp size={16} />
-                {post.likeCount}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <MessageSquare size={16} />
-                {post.replyCount}
-              </span>
-            </div>
+
+            <Link
+              href={`/posts/${post.id}`}
+              aria-label={`${post.replyCount} 条回复`}
+              className="mt-2 inline-flex min-w-9 shrink-0 justify-center rounded-[var(--radius-control)] bg-muted px-2 py-1 text-sm font-semibold leading-none text-muted-foreground transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
+            >
+              {post.replyCount}
+            </Link>
           </div>
         </article>
       ))}

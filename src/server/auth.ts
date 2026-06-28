@@ -13,6 +13,7 @@ const SESSION_DAYS = 30;
 
 export type CurrentUser = {
   id: string;
+  uid: number;
   username: string;
   email: string;
   avatarUrl: string | null;
@@ -110,6 +111,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const [user] = await db
     .select({
       id: users.id,
+      uid: users.uid,
       username: users.username,
       email: users.email,
       avatarUrl: users.avatarUrl,

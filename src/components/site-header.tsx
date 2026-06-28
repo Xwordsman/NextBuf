@@ -100,7 +100,7 @@ export function SiteHeader({ settings, user }: SiteHeaderProps) {
                         {user.username}
                       </div>
                       <div className="mt-1 font-mono text-xs text-muted-foreground">
-                        UID {user.id.slice(0, 8)}
+                        UID {user.uid}
                       </div>
                     </div>
                   </div>
