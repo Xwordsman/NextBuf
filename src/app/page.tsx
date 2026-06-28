@@ -39,9 +39,14 @@ export default async function Home() {
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[160px_minmax(0,1fr)_320px]">
-        <NodeNav nodes={rootNodes} activeSlug={null} />
+      <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 py-5">
+        <NodeNav
+          nodes={rootNodes}
+          activeSlug={null}
+          className="mb-4 xl:fixed xl:left-[max(1rem,calc((100vw-72rem)/2-8.75rem))] xl:top-[5.25rem] xl:mb-0 xl:w-32"
+        />
 
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section>
           <Card className="gap-0 py-0">
             <FeedTabs active="latest" />
@@ -85,6 +90,7 @@ export default async function Home() {
             </CardContent>
           </Card>
         </aside>
+        </div>
       </main>
     </>
   );

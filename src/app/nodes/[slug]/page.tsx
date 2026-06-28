@@ -44,8 +44,12 @@ export default async function NodeDetailPage({
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[160px_minmax(0,1fr)]">
-        <NodeNav nodes={rootNodes} activeSlug={activeRootSlug} />
+      <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 py-5">
+        <NodeNav
+          nodes={rootNodes}
+          activeSlug={activeRootSlug}
+          className="mb-4 xl:fixed xl:left-[max(1rem,calc((100vw-72rem)/2-8.75rem))] xl:top-[5.25rem] xl:mb-0 xl:w-32"
+        />
 
         <section>
           <Card className="mb-4">

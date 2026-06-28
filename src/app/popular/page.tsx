@@ -22,8 +22,11 @@ export default async function PopularPage() {
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto grid w-full max-w-5xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[160px_minmax(0,1fr)]">
-        <NodeNav nodes={rootNodes} />
+      <main className="relative mx-auto w-full max-w-4xl flex-1 px-4 py-5">
+        <NodeNav
+          nodes={rootNodes}
+          className="mb-4 xl:fixed xl:left-[max(1rem,calc((100vw-56rem)/2-8.75rem))] xl:top-[5.25rem] xl:mb-0 xl:w-32"
+        />
 
         <section>
           <Card className="gap-0 py-0">
