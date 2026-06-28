@@ -8,7 +8,7 @@ export default async function InstallPage() {
   await requireNotInstalled();
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10">
+    <main className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-base)] bg-primary text-lg font-semibold text-primary-foreground">

@@ -15,7 +15,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10">
+    <main className="flex flex-1 items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader>
           <h1 className="text-xl font-semibold">登录 NextBuf</h1>
