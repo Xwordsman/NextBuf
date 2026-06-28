@@ -1,6 +1,7 @@
 services:
   web:
     image: ${NEXTBUF_IMAGE:-ghcr.io/xwordsman/nextbuf:latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       NODE_ENV: production

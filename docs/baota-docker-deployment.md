@@ -68,6 +68,8 @@ openssl rand -base64 32
 
 默认只暴露 Web 端口 `3050`。PostgreSQL 和 Redis 仅在 Docker 内网中给 Web 容器访问，不映射到服务器宿主机端口，避免与服务器已有数据库服务冲突。
 
+Web 服务设置了 `pull_policy: always`，重新部署时会优先从 GHCR 拉取最新镜像，避免服务器复用本地旧的 `latest` 镜像缓存。
+
 首次启动时，Web 容器会先执行：
 
 ```text
@@ -104,3 +106,5 @@ http://服务器IP:3050/install
 4. 重启 Web 容器。
 
 数据库数据存储在 Docker volume `postgres_data` 中，重启 Web 容器不会丢失数据。
+
+如果服务器之前部署过同名 NextBuf，想完全重新安装，需要在宝塔中删除旧编排对应的数据卷，例如 `nextbuf_postgres_data` 和 `nextbuf_redis_data`，否则会继续读取旧论坛的数据。
