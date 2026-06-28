@@ -108,6 +108,22 @@ export async function getRootNodes() {
     .orderBy(asc(nodes.sortOrder), asc(nodes.name));
 }
 
+export async function getRootNavigationNodes(): Promise<NodeOption[]> {
+  return db
+    .select({
+      id: nodes.id,
+      parentId: nodes.parentId,
+      name: nodes.name,
+      slug: nodes.slug,
+      level: nodes.level,
+      postingMode: nodes.postingMode,
+      status: nodes.status,
+    })
+    .from(nodes)
+    .where(and(isNull(nodes.parentId), eq(nodes.status, "active")))
+    .orderBy(asc(nodes.sortOrder), asc(nodes.name));
+}
+
 export async function getNodeBySlug(slug: string) {
   const [node] = await db
     .select()
@@ -354,6 +370,32 @@ export async function getCommunityStats() {
     posts: postCount?.value ?? 0,
     replies: replyCount?.value ?? 0,
     nodes: nodeCount?.value ?? 0,
+  };
+}
+
+export async function getUserSidebarStats(userId: string) {
+  const [postCount] = await db
+    .select({ value: count() })
+    .from(posts)
+    .where(and(eq(posts.authorId, userId), eq(posts.status, "published")));
+  const [replyCount] = await db
+    .select({ value: count() })
+    .from(replies)
+    .where(and(eq(replies.authorId, userId), eq(replies.status, "published")));
+  const [bookmarkCount] = await db
+    .select({ value: count() })
+    .from(postBookmarks)
+    .where(eq(postBookmarks.userId, userId));
+  const [notificationCount] = await db
+    .select({ value: count() })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
+
+  return {
+    posts: postCount?.value ?? 0,
+    replies: replyCount?.value ?? 0,
+    bookmarks: bookmarkCount?.value ?? 0,
+    notifications: notificationCount?.value ?? 0,
   };
 }
 

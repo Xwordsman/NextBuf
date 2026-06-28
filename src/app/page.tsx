@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Activity, MessageSquare, Network, Users } from "lucide-react";
 
 import { FeedTabs } from "@/components/feed-tabs";
+import { HomeUserCard } from "@/components/home-user-card";
+import { NodeNav } from "@/components/node-nav";
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -9,15 +10,15 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth";
 import {
-  getCommunityStats,
   getLatestPosts,
   getPopularPosts,
+  getRootNavigationNodes,
+  getUserSidebarStats,
 } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
@@ -26,18 +27,21 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   await requireInstalled();
 
-  const [settings, user, posts, popularPosts, stats] = await Promise.all([
+  const [settings, user, posts, popularPosts, rootNodes] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getLatestPosts(),
     getPopularPosts(5),
-    getCommunityStats(),
+    getRootNavigationNodes(),
   ]);
+  const userStats = user ? await getUserSidebarStats(user.id) : null;
 
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[160px_minmax(0,1fr)_320px]">
+        <NodeNav nodes={rootNodes} activeSlug={null} />
+
         <section>
           <Card className="gap-0 py-0">
             <FeedTabs active="latest" />
@@ -50,20 +54,7 @@ export default async function Home() {
         </section>
 
         <aside className="space-y-4">
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>{settings?.siteName ?? "NextBuf"}</CardTitle>
-              <CardDescription>
-                {settings?.siteDescription ?? "轻量现代社区系统。"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3">
-              <StatItem icon={Users} label="用户" value={stats.users} />
-              <StatItem icon={MessageSquare} label="主题" value={stats.posts} />
-              <StatItem icon={Activity} label="回复" value={stats.replies} />
-              <StatItem icon={Network} label="节点" value={stats.nodes} />
-            </CardContent>
-          </Card>
+          <HomeUserCard settings={settings} user={user} stats={userStats} />
 
           <Card size="sm">
             <CardHeader>
@@ -96,25 +87,5 @@ export default async function Home() {
         </aside>
       </main>
     </>
-  );
-}
-
-function StatItem({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Activity;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-muted/60 p-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Icon size={14} />
-        {label}
-      </div>
-      <div className="mt-2 text-xl font-semibold">{value}</div>
-    </div>
   );
 }
