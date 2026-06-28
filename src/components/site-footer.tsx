@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Code2 } from "lucide-react";
 
-import { getRequestMetricsSnapshot } from "@/server/request-metrics";
 import { getRuntimeInfo } from "@/server/runtime";
 
 const internalLinks = [
@@ -14,7 +13,6 @@ const internalLinks = [
 
 export function SiteFooter() {
   const runtime = getRuntimeInfo();
-  const metrics = getRequestMetricsSnapshot();
 
   return (
     <footer className="border-t border-border bg-panel text-xs text-muted-foreground">
@@ -34,7 +32,7 @@ export function SiteFooter() {
             ))}
             <span className="text-border">·</span>
             <a
-              href="https://github.com/Xwordsman/NextBuf"
+              href="https://www.nextbuf.com/"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-[var(--radius-control)] py-1 text-foreground/80 transition-colors duration-200 hover:text-primary"
@@ -48,19 +46,17 @@ export function SiteFooter() {
         </div>
 
         <div className="space-y-2 leading-6">
-          <p className="text-sm text-foreground/80">创作者们的轻社区</p>
           <p className="font-mono tracking-normal text-muted-foreground">
             Powered by{" "}
             <a
-              href="https://github.com/Xwordsman/NextBuf"
+              href="https://www.nextbuf.com/"
               target="_blank"
               rel="noreferrer"
               className="font-semibold text-foreground/80 transition-colors duration-200 hover:text-primary"
             >
               NextBuf
             </a>{" "}
-            · VERSION: {runtime.version} · Time: {metrics.elapsedSeconds.toFixed(3)} · SQL:{" "}
-            {metrics.sqlCount}
+            · VERSION: {runtime.version}
           </p>
         </div>
       </div>
