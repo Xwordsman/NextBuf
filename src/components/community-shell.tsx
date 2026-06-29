@@ -1,6 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import {
+  communityContentClassName,
+  communityMainClassName,
+  communitySidebarClassName,
+  communityTwoColumnClassName,
+} from "@/components/community-layout";
 import { HomeUserCard } from "@/components/home-user-card";
 import { NodeNav } from "@/components/node-nav";
 import { SiteHeader } from "@/components/site-header";
@@ -57,7 +63,7 @@ export async function CommunityShell({
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 py-5">
+      <main className={communityMainClassName}>
         {!hideNodeNav ? (
           <NodeNav
             nodes={rootNodes}
@@ -66,8 +72,10 @@ export async function CommunityShell({
           />
         ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className={cn("min-w-0", contentClassName)}>{children}</section>
+        <div className={communityTwoColumnClassName}>
+          <section className={cn(communityContentClassName, contentClassName)}>
+            {children}
+          </section>
           <CommunitySidebar
             settings={settings}
             user={user}
@@ -92,7 +100,7 @@ function CommunitySidebar({
   popularPosts: Awaited<ReturnType<typeof getPopularPosts>>;
 }) {
   return (
-    <aside className="space-y-4">
+    <aside className={communitySidebarClassName}>
       <HomeUserCard settings={settings} user={user} stats={stats} />
 
       <Card size="sm">

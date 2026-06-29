@@ -76,7 +76,6 @@ export async function createPostAction(
   }
 
   const rootNodeId = node.parentId ?? node.id;
-  const now = new Date();
   const [post] = await db
     .insert(posts)
     .values({
@@ -86,8 +85,6 @@ export async function createPostAction(
       title: parsed.data.title,
       content: parsed.data.content,
       status: "published",
-      lastReplyAt: now,
-      lastReplyUserId: user.id,
     })
     .returning({ id: posts.id });
 

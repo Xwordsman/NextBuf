@@ -85,7 +85,7 @@ export function PostList({
                 <span className="text-xs text-muted-foreground">
                   {formatRelativeTime(post.lastReplyAt)}
                 </span>
-                {post.lastReplyUsername ? (
+                {post.replyCount > 0 && post.lastReplyUsername ? (
                   <>
                     <span className="text-xs text-muted-foreground">·</span>
                     <span className="text-xs text-muted-foreground">最后回复</span>

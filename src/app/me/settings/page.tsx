@@ -26,7 +26,7 @@ export default async function ProfileSettingsPage() {
   }
 
   return (
-    <CommunityShell settings={settings} user={user} contentClassName="lg:max-w-3xl">
+    <CommunityShell settings={settings} user={user}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">资料设置</h1>

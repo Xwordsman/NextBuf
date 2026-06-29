@@ -64,7 +64,7 @@ export function HomeUserCard({ settings, user, stats }: HomeUserCardProps) {
 
   return (
     <Card size="sm">
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <div className="flex items-center gap-3">
           <Link
             href={`/users/${user.username}`}
@@ -92,7 +92,7 @@ export function HomeUserCard({ settings, user, stats }: HomeUserCardProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-4 gap-1.5">
           <ProfileMetric
             href="/me"
             icon={MessageSquare}
@@ -147,13 +147,13 @@ function ProfileMetric({
   return (
     <Link
       href={href}
-      className="rounded-[var(--radius-control)] border border-border bg-muted/45 p-3 transition-colors duration-200 hover:border-foreground/20 hover:bg-muted"
+      className="flex min-w-0 flex-col items-center rounded-[var(--radius-control)] border border-border bg-muted/45 px-1.5 py-2 text-center transition-colors duration-200 hover:border-foreground/20 hover:bg-muted"
     >
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Icon size={14} />
-        <span>{label}</span>
+      <div className="flex min-w-0 items-center justify-center gap-1 text-[11px] text-muted-foreground">
+        <Icon size={13} className="shrink-0" />
+        <span className="truncate">{label}</span>
       </div>
-      <div className="mt-2 text-xl font-semibold leading-none">{value}</div>
+      <div className="mt-1.5 text-lg font-semibold leading-none">{value}</div>
     </Link>
   );
 }

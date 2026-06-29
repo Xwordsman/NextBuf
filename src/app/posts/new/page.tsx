@@ -18,7 +18,7 @@ export default async function NewPostPage() {
   ]);
 
   return (
-    <CommunityShell settings={settings} user={user} contentClassName="lg:max-w-3xl">
+    <CommunityShell settings={settings} user={user}>
       <Card>
         <CardHeader>
           <h1 className="text-xl font-semibold">发布主题</h1>

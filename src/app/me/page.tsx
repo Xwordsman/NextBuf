@@ -1,5 +1,11 @@
 import Link from "next/link";
 
+import {
+  communityContentClassName,
+  communityMainClassName,
+  communitySidebarClassName,
+  communityTwoColumnClassName,
+} from "@/components/community-layout";
 import { PostList } from "@/components/post-list";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -27,29 +33,30 @@ export default async function MePage() {
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-4 px-4 py-5 lg:grid-cols-[1fr_320px]">
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold">我的空间</h1>
-              <p className="mt-1 text-sm text-muted-foreground">查看你的主题、回复和收藏。</p>
+      <main className={communityMainClassName}>
+        <div className={communityTwoColumnClassName}>
+          <section className={`${communityContentClassName} space-y-4`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-semibold">我的空间</h1>
+                <p className="mt-1 text-sm text-muted-foreground">查看你的主题、回复和收藏。</p>
+              </div>
+              <Button asChild variant="secondary">
+                <Link href="/me/settings">编辑资料</Link>
+              </Button>
             </div>
-            <Button asChild variant="secondary">
-              <Link href="/me/settings">编辑资料</Link>
-            </Button>
-          </div>
 
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold">我的主题</h2>
-            </CardHeader>
-            <CardContent>
-              <PostList posts={posts} emptyText="你还没有发布主题。" />
-            </CardContent>
-          </Card>
-        </section>
+            <Card>
+              <CardHeader>
+                <h2 className="font-semibold">我的主题</h2>
+              </CardHeader>
+              <CardContent>
+                <PostList posts={posts} emptyText="你还没有发布主题。" />
+              </CardContent>
+            </Card>
+          </section>
 
-        <aside className="space-y-4">
+          <aside className={communitySidebarClassName}>
           <Card>
             <CardHeader>
               <h2 className="font-semibold">最近回复</h2>
@@ -101,7 +108,8 @@ export default async function MePage() {
               )}
             </CardContent>
           </Card>
-        </aside>
+          </aside>
+        </div>
       </main>
     </>
   );
