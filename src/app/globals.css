@@ -208,6 +208,7 @@ textarea {
     cursor: pointer;
   }
   html {
+    scrollbar-gutter: stable both-edges;
     @apply font-sans;
   }
 }
