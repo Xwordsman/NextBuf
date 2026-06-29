@@ -20,19 +20,21 @@ export default async function AdminLayout({
   return (
     <>
       <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-primary">
-                返回前台
-              </Link>
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold">运营后台</h1>
+      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-4 px-4 py-5 md:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className="min-w-0 md:sticky md:top-20 md:self-start">
+          <div className="rounded-[var(--radius-base)] border border-border bg-panel p-2">
+            <div className="mb-2 hidden px-2 py-2 md:block">
+              <p className="text-xs text-muted-foreground">
+                <Link href="/" className="hover:text-foreground">
+                  返回前台
+                </Link>
+              </p>
+              <h1 className="mt-1 text-lg font-semibold">运营后台</h1>
+            </div>
+            <AdminNav />
           </div>
-          <AdminNav />
-        </div>
-        {children}
+        </aside>
+        <section className="min-w-0">{children}</section>
       </main>
     </>
   );

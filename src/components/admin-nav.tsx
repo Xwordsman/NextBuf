@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   FileText,
   LayoutDashboard,
@@ -9,6 +12,8 @@ import {
   Settings,
   Users,
 } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", label: "概览", icon: LayoutDashboard },
@@ -22,19 +27,34 @@ const navItems = [
 ];
 
 export function AdminNav() {
+  const pathname = usePathname();
+
   return (
-    <nav className="flex flex-wrap gap-2">
+    <nav
+      aria-label="后台导航"
+      className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible"
+    >
       {navItems.map((item) => {
         const Icon = item.icon;
+        const active =
+          item.href === "/admin"
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link
             key={item.href}
             href={item.href}
-            className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-control)] border border-border bg-panel px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:border-primary/40 hover:text-foreground"
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "inline-flex h-9 flex-none items-center gap-2 rounded-[var(--radius-control)] px-3 text-sm font-medium transition-colors duration-200 md:w-full",
+              active
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
           >
-            <Icon size={16} />
-            {item.label}
+            <Icon size={16} className="shrink-0" />
+            <span>{item.label}</span>
           </Link>
         );
       })}
