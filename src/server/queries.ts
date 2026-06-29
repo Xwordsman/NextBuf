@@ -65,6 +65,7 @@ export type ReplyItem = {
   createdAt: Date;
   authorId: string;
   authorUsername: string;
+  authorAvatarUrl: string | null;
   authorTrustLevel: number;
   viewerHasLiked: boolean;
 };
@@ -236,6 +237,7 @@ export async function getPostDetails(id: string, viewerId?: string) {
       nodeSlug: nodes.slug,
       rootNodeId: posts.rootNodeId,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
     })
     .from(posts)
@@ -257,6 +259,7 @@ export async function getPostDetails(id: string, viewerId?: string) {
       createdAt: replies.createdAt,
       authorId: replies.authorId,
       authorUsername: users.username,
+      authorAvatarUrl: users.avatarUrl,
       authorTrustLevel: users.trustLevel,
     })
     .from(replies)

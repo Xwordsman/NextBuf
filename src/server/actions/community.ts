@@ -123,6 +123,8 @@ export async function createReplyAction(
     return { message: "帖子不存在或不可回复。" };
   }
 
+  const replyNumber = post.replyCount + 1;
+
   await db.transaction(async (tx) => {
     await tx.insert(replies).values({
       postId,
@@ -154,7 +156,7 @@ export async function createReplyAction(
 
   revalidatePath(`/posts/${postId}`);
   revalidatePath("/me/notifications");
-  redirect(`/posts/${postId}`);
+  redirect(`/posts/${postId}#reply-${replyNumber}`);
 }
 
 export async function togglePostLikeAction(postId: string) {
