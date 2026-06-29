@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CommunityShell } from "@/components/community-shell";
 import { ProfileForm } from "@/components/forms/profile-form";
-import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getCurrentUser, requireUser } from "@/server/auth";
@@ -26,28 +26,27 @@ export default async function ProfileSettingsPage() {
   }
 
   return (
-    <>
-      <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">资料设置</h1>
-            <p className="mt-1 text-sm text-muted-foreground">维护你的公开头像和简介。</p>
-          </div>
-          <Button asChild variant="secondary">
-            <Link href="/me">返回我的空间</Link>
-          </Button>
+    <CommunityShell settings={settings} user={user} contentClassName="lg:max-w-3xl">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">资料设置</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            维护你的公开头像和简介。
+          </p>
         </div>
+        <Button asChild variant="secondary">
+          <Link href="/me">返回我的空间</Link>
+        </Button>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <h2 className="font-semibold">公开资料</h2>
-          </CardHeader>
-          <CardContent>
-            <ProfileForm profile={profileData.profile} />
-          </CardContent>
-        </Card>
-      </main>
-    </>
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold">公开资料</h2>
+        </CardHeader>
+        <CardContent>
+          <ProfileForm profile={profileData.profile} />
+        </CardContent>
+      </Card>
+    </CommunityShell>
   );
 }

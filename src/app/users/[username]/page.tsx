@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 
+import { CommunityShell } from "@/components/community-shell";
 import { PostList } from "@/components/post-list";
-import { SiteHeader } from "@/components/site-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDateTime, getInitial } from "@/lib/utils";
 import { getCurrentUser } from "@/server/auth";
 import { getUserProfile } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
-import { formatDateTime, getInitial } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -33,43 +33,40 @@ export default async function UserProfilePage({
   const { profile, posts } = profileData;
 
   return (
-    <>
-      <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5">
-        <Card className="mb-4">
-          <CardContent>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex gap-3">
-                <Avatar size="lg">
-                  <AvatarImage
-                    src={profile.avatarUrl ?? undefined}
-                    alt={`${profile.username} 的头像`}
-                  />
-                  <AvatarFallback>{getInitial(profile.username)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-2xl font-semibold">{profile.username}</h1>
-                  <p className="mt-1 font-mono text-xs text-muted-foreground">
-                    UID {profile.uid}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    加入于 {formatDateTime(profile.createdAt)}
-                  </p>
-                  <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
-                    {profile.bio ?? "这个用户还没有填写简介。"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">L{profile.trustLevel}</Badge>
-                {profile.role === "admin" ? <Badge>管理员</Badge> : null}
+    <CommunityShell settings={settings} user={user}>
+      <Card className="mb-4">
+        <CardContent>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex gap-3">
+              <Avatar size="lg">
+                <AvatarImage
+                  src={profile.avatarUrl ?? undefined}
+                  alt={`${profile.username} 的头像`}
+                />
+                <AvatarFallback>{getInitial(profile.username)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-semibold">{profile.username}</h1>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  UID {profile.uid}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  加入于 {formatDateTime(profile.createdAt)}
+                </p>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {profile.bio ?? "这个用户还没有填写简介。"}
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <h2 className="mb-3 font-semibold">最近主题</h2>
-        <PostList posts={posts} emptyText="这个用户还没有发布主题。" />
-      </main>
-    </>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">L{profile.trustLevel}</Badge>
+              {profile.role === "admin" ? <Badge>管理员</Badge> : null}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <h2 className="mb-3 font-semibold">最近主题</h2>
+      <PostList posts={posts} emptyText="这个用户还没有发布主题。" />
+    </CommunityShell>
   );
 }

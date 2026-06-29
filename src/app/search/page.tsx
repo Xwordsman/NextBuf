@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 
+import { CommunityShell } from "@/components/community-shell";
 import { PostList } from "@/components/post-list";
-import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,45 +27,44 @@ export default async function SearchPage({
   ]);
 
   return (
-    <>
-      <SiteHeader settings={settings} user={user} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5">
-        <div className="mb-4">
-          <h1 className="text-2xl font-semibold">搜索</h1>
-          <p className="mt-1 text-sm text-muted-foreground">查找标题和正文中的公开主题。</p>
-        </div>
+    <CommunityShell settings={settings} user={user} activeNodeSlug={null}>
+      <div className="mb-4">
+        <h1 className="text-2xl font-semibold">搜索</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          查找标题和正文中的公开主题。
+        </p>
+      </div>
 
-        <Card className="mb-4">
-          <CardContent>
-            <form action="/search" className="flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search
-                  size={17}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  name="q"
-                  defaultValue={keyword}
-                  placeholder="输入至少 2 个字符"
-                  className="pl-9"
-                />
-              </div>
-              <Button type="submit">搜索</Button>
-            </form>
-          </CardContent>
+      <Card className="mb-4">
+        <CardContent>
+          <form action="/search" className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search
+                size={17}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                name="q"
+                defaultValue={keyword}
+                placeholder="输入至少 2 个字符"
+                className="pl-9"
+              />
+            </div>
+            <Button type="submit">搜索</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {keyword.length > 0 && keyword.length < 2 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">
+          请输入至少 2 个字符。
         </Card>
-
-        {keyword.length > 0 && keyword.length < 2 ? (
-          <Card className="p-8 text-center text-sm text-muted-foreground">
-            请输入至少 2 个字符。
-          </Card>
-        ) : (
-          <PostList
-            posts={posts}
-            emptyText={keyword ? "没有找到匹配的主题。" : "输入关键词开始搜索。"}
-          />
-        )}
-      </main>
-    </>
+      ) : (
+        <PostList
+          posts={posts}
+          emptyText={keyword ? "没有找到匹配的主题。" : "输入关键词开始搜索。"}
+        />
+      )}
+    </CommunityShell>
   );
 }
