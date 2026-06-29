@@ -1,4 +1,4 @@
-FROM node:24-alpine AS base
+FROM public.ecr.aws/docker/library/node:24-alpine AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
