@@ -7,13 +7,19 @@ import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
 
 export async function getSiteSettings() {
-  const [settings] = await db
-    .select()
-    .from(siteSettings)
-    .where(eq(siteSettings.id, "site"))
-    .limit(1);
+  try {
+    const [settings] = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.id, "site"))
+      .limit(1);
 
-  return settings ?? null;
+    return settings ?? null;
+  } catch {
+    // Local dev or first boot may not have a database online yet.
+    // Treat that as "not installed" so the install flow can render.
+    return null;
+  }
 }
 
 export async function isInstalled() {

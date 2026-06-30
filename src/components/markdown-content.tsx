@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -51,6 +53,23 @@ const components: Components = {
     );
   },
   code({ children, className, ...props }) {
+    const text = String(children);
+    const isBlock = Boolean(className?.includes("language-") || text.includes("\n"));
+
+    if (isBlock) {
+      return (
+        <code
+          className={cn(
+            "block whitespace-pre-wrap font-mono text-[13px] leading-6 text-foreground",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    }
+
     return (
       <code
         className={cn(

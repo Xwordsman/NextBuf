@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
+import { MarkdownEditor } from "@/components/forms/markdown-editor";
 import { Field, FieldError, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,7 +11,6 @@ import {
   NativeSelectOptGroup,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { Textarea } from "@/components/ui/textarea";
 import type { NodeOption } from "@/server/queries";
 import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { createPostAction } from "@/server/actions/community";
@@ -36,7 +36,7 @@ export function PostForm({ nodes }: PostFormProps) {
           <NativeSelectOption value="">选择发布节点</NativeSelectOption>
           {roots.map((root) => (
             <NativeSelectOptGroup key={root.id} label={root.name}>
-              <NativeSelectOption value={root.id}>发到 {root.name}</NativeSelectOption>
+              <NativeSelectOption value={root.id}>{root.name}</NativeSelectOption>
               {nodes
                 .filter((node) => node.parentId === root.id)
                 .map((child) => (
@@ -57,8 +57,7 @@ export function PostForm({ nodes }: PostFormProps) {
       </Field>
       <Field>
         <FieldLabel htmlFor="content">正文</FieldLabel>
-        <Textarea id="content" name="content" required rows={12} />
-        <FieldDescription>第一阶段先使用纯文本/Markdown 风格输入。</FieldDescription>
+        <MarkdownEditor id="content" name="content" required />
         <FieldError errors={toFieldErrors(state.errors?.content)} />
       </Field>
       <SubmitButton pendingText="正在发布...">发布主题</SubmitButton>
