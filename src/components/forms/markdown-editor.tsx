@@ -35,6 +35,7 @@ type MarkdownEditorProps = Omit<
   "value" | "defaultValue" | "onChange"
 > & {
   defaultValue?: string;
+  density?: "regular" | "compact";
   toolbarClassName?: string;
   previewClassName?: string;
 };
@@ -107,10 +108,11 @@ function ToolbarButton({
 
 export function MarkdownEditor({
   defaultValue = "",
+  density = "regular",
   toolbarClassName,
   previewClassName,
   className,
-  rows = 14,
+  rows,
   ...textareaProps
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<MarkdownMode>("split");
@@ -118,6 +120,10 @@ export function MarkdownEditor({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const pendingSelectionRef = useRef<SelectionRange | null>(null);
   const deferredContent = useDeferredValue(content);
+  const isCompact = density === "compact";
+  const editorMinHeightClassName = isCompact ? "min-h-[220px]" : "min-h-[420px]";
+  const previewMaxHeightClassName = isCompact ? "max-h-[360px]" : "max-h-[70vh]";
+  const resolvedRows = rows ?? (isCompact ? 8 : 14);
 
   const focusSelection = (selection: SelectionRange) => {
     pendingSelectionRef.current = selection;
@@ -322,7 +328,12 @@ export function MarkdownEditor({
     );
 
   return (
-    <div className={cn("overflow-hidden rounded-[var(--radius-control)] border border-input bg-panel", className)}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-[var(--radius-control)] border border-input bg-panel",
+        className,
+      )}
+    >
       <div
         className={cn(
           "flex flex-wrap items-center gap-2 border-b border-border px-3 py-2",
@@ -437,13 +448,14 @@ export function MarkdownEditor({
 
       <div
         className={cn(
-          "grid min-h-[420px]",
+          "grid",
+          editorMinHeightClassName,
           mode === "split" ? "gap-0 lg:grid-cols-2" : "grid-cols-1",
         )}
       >
         <div
           className={cn(
-            "min-h-[420px]",
+            editorMinHeightClassName,
             mode === "split"
               ? "border-b border-border lg:border-b-0 lg:border-r"
               : mode === "preview"
@@ -453,7 +465,7 @@ export function MarkdownEditor({
         >
           <textarea
             ref={textareaRef}
-            rows={rows}
+            rows={resolvedRows}
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
@@ -486,24 +498,26 @@ export function MarkdownEditor({
               }
             }}
             className={cn(
-              "min-h-[420px] w-full resize-y border-0 bg-transparent px-4 py-4 font-mono text-[13px] leading-6 text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-none",
+              "w-full resize-y border-0 bg-transparent px-4 py-4 font-mono text-[13px] leading-6 text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-none",
+              editorMinHeightClassName,
               mode === "split"
                 ? "rounded-none"
                 : "rounded-b-[var(--radius-control)]",
             )}
-      placeholder="支持 Markdown 语法"
+            placeholder="支持 Markdown 语法"
             {...textareaProps}
           />
         </div>
 
         <div
           className={cn(
-            "min-h-[420px] bg-panel",
+            "bg-panel",
+            editorMinHeightClassName,
             mode === "edit" ? "hidden" : "",
             previewClassName,
           )}
         >
-          <div className="max-h-[70vh] overflow-auto px-4 py-4">
+          <div className={cn("overflow-auto px-4 py-4", previewMaxHeightClassName)}>
             <MarkdownContent content={deferredContent} compact />
           </div>
         </div>

@@ -23,7 +23,7 @@ export default async function NewPostPage() {
         <CardHeader>
           <h1 className="text-xl font-semibold">发布主题</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            第一阶段先保持简单，后续再补 Markdown 预览和附件上传。
+            支持 Markdown 写作、分屏预览和常用排版快捷操作。
           </p>
         </CardHeader>
         <CardContent>

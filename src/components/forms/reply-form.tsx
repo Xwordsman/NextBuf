@@ -3,8 +3,8 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
+import { MarkdownEditor } from "@/components/forms/markdown-editor";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
 import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { createReplyAction } from "@/server/actions/community";
 
@@ -21,7 +21,7 @@ export function ReplyForm({ postId }: { postId: string }) {
       ) : null}
       <Field>
         <FieldLabel htmlFor="content">回复</FieldLabel>
-        <Textarea id="content" name="content" required rows={5} />
+        <MarkdownEditor id="content" name="content" required density="compact" />
         <FieldError errors={toFieldErrors(state.errors?.content)} />
       </Field>
       <SubmitButton pendingText="正在回复...">发布回复</SubmitButton>
