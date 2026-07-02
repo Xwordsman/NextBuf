@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Network,
   ShieldAlert,
+  ShieldCheck,
   Settings,
   Users,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/admin/nodes", label: "节点", icon: Network },
   { href: "/admin/posts", label: "帖子", icon: FileText },
   { href: "/admin/replies", label: "回复", icon: MessageSquare },
+  { href: "/admin/moderation", label: "审核", icon: ShieldCheck },
   { href: "/admin/reports", label: "举报", icon: ShieldAlert },
   { href: "/admin/logs", label: "日志", icon: ListChecks },
   { href: "/admin/users", label: "用户", icon: Users },
@@ -49,7 +51,7 @@ export function AdminNav() {
             className={cn(
               "inline-flex h-9 flex-none items-center gap-2 rounded-[var(--radius-control)] px-3 text-sm font-medium transition-colors duration-200 md:w-full",
               active
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                ? "bg-primary !text-white hover:bg-primary/90 hover:!text-white [&_*]:!text-white"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >

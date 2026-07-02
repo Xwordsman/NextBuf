@@ -1,12 +1,21 @@
+import Link from "next/link";
+
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { getAdminModerationLogs } from "@/server/queries";
+import { getAdminModerationLogsPage, normalizePage } from "@/server/queries";
 import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLogsPage() {
-  const logs = await getAdminModerationLogs();
+export default async function AdminLogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const logsPage = await getAdminModerationLogsPage(normalizePage(pageParam));
 
   return (
     <Card>
@@ -17,12 +26,12 @@ export default async function AdminLogsPage() {
         </p>
       </CardHeader>
       <CardContent className="space-y-2">
-        {logs.length === 0 ? (
+        {logsPage.items.length === 0 ? (
           <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted-foreground">
             暂时没有治理日志。
           </div>
         ) : (
-          logs.map((log) => (
+          logsPage.items.map((log) => (
             <div
               key={log.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-border p-3"
@@ -39,12 +48,22 @@ export default async function AdminLogsPage() {
                   {log.actorUsername ?? "系统"} · {formatDateTime(log.createdAt)}
                 </p>
               </div>
-              <pre className="max-w-full overflow-auto rounded-[var(--radius-control)] bg-panel-muted p-2 text-xs text-muted-foreground">
-                {JSON.stringify(log.metadata)}
-              </pre>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild size="sm" variant="secondary">
+                  <Link href={`/admin/logs/${log.id}`}>详情</Link>
+                </Button>
+                <pre className="max-w-full overflow-auto rounded-[var(--radius-control)] bg-panel-muted p-2 text-xs text-muted-foreground">
+                  {JSON.stringify(log.metadata)}
+                </pre>
+              </div>
             </div>
           ))
         )}
+        <Pagination
+          basePath="/admin/logs"
+          page={logsPage.page}
+          totalPages={logsPage.totalPages}
+        />
       </CardContent>
     </Card>
   );

@@ -1,8 +1,11 @@
-import { Bookmark, Flag, ThumbsUp } from "lucide-react";
+import Link from "next/link";
+import { Bookmark, Flag, Pencil, ThumbsUp, Trash2 } from "lucide-react";
 
 import { ReportForm } from "@/components/forms/report-form";
 import { Button } from "@/components/ui/button";
 import {
+  deletePostAction,
+  deleteReplyAction,
   toggleBookmarkAction,
   togglePostLikeAction,
   toggleReplyLikeAction,
@@ -17,6 +20,7 @@ type ContentActionsProps = {
   viewerHasBookmarked?: boolean;
   canInteract: boolean;
   canReport: boolean;
+  canManage?: boolean;
 };
 
 export function ContentActions({
@@ -28,6 +32,7 @@ export function ContentActions({
   viewerHasBookmarked = false,
   canInteract,
   canReport,
+  canManage = false,
 }: ContentActionsProps) {
   const likeAction =
     targetType === "post"
@@ -65,6 +70,30 @@ export function ContentActions({
             {viewerHasBookmarked ? "已收藏" : "收藏"}
           </Button>
         </form>
+      ) : null}
+
+      {canManage ? (
+        <>
+          <Button asChild size="sm" variant="secondary">
+            <Link
+              href={
+                targetType === "post"
+                  ? `/posts/${postId}/edit`
+                  : `/replies/${targetId}/edit`
+              }
+            >
+              <Pencil size={15} />
+              编辑
+            </Link>
+          </Button>
+          <form action={targetType === "post" ? deletePostAction : deleteReplyAction}>
+            <input type="hidden" name="id" value={targetId} />
+            <Button type="submit" size="sm" variant="destructive">
+              <Trash2 size={15} />
+              删除
+            </Button>
+          </form>
+        </>
       ) : null}
 
       {canReport ? (

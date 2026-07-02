@@ -37,7 +37,11 @@ export default async function PostDetailPage({
   }
 
   const { post, replies } = detail;
-  const canReply = Boolean(user);
+  const canInteract = Boolean(user);
+  const canReply = Boolean(user && user.status !== "muted");
+  const canManagePost = Boolean(
+    user && (user.role === "admin" || user.id === post.authorId),
+  );
 
   return (
     <CommunityShell settings={settings} user={user} activeNodeId={post.rootNodeId}>
@@ -80,6 +84,17 @@ export default async function PostDetailPage({
                 >
                   {formatDateTime(post.createdAt)}
                 </time>
+                {post.editedAt ? (
+                  <>
+                    <span className="text-xs text-muted-foreground">·</span>
+                    <time
+                      dateTime={post.editedAt.toISOString()}
+                      className="text-xs text-muted-foreground"
+                    >
+                      已编辑 {formatDateTime(post.editedAt)}
+                    </time>
+                  </>
+                ) : null}
               </div>
 
               <h1 className="mt-3 text-[22px] font-semibold leading-8 text-foreground sm:text-2xl">
@@ -110,8 +125,9 @@ export default async function PostDetailPage({
             likeCount={post.likeCount}
             viewerHasLiked={post.viewerHasLiked}
             viewerHasBookmarked={post.viewerHasBookmarked}
-            canInteract={canReply}
+            canInteract={canInteract}
             canReport={Boolean(user && user.id !== post.authorId)}
+            canManage={canManagePost}
           />
         </CardContent>
       </Card>
@@ -136,6 +152,9 @@ export default async function PostDetailPage({
             {replies.map((reply, index) => {
               const floor = index + 1;
               const replyAnchor = `reply-${floor}`;
+              const canManageReply = Boolean(
+                user && (user.role === "admin" || user.id === reply.authorId),
+              );
 
               return (
                 <article
@@ -173,6 +192,14 @@ export default async function PostDetailPage({
                         <time dateTime={reply.createdAt.toISOString()}>
                           {formatDateTime(reply.createdAt)}
                         </time>
+                        {reply.editedAt ? (
+                          <>
+                            <span>·</span>
+                            <time dateTime={reply.editedAt.toISOString()}>
+                              已编辑 {formatDateTime(reply.editedAt)}
+                            </time>
+                          </>
+                        ) : null}
                         <span>·</span>
                         <a
                           href={`#${replyAnchor}`}
@@ -195,8 +222,9 @@ export default async function PostDetailPage({
                           postId={post.id}
                           likeCount={reply.likeCount}
                           viewerHasLiked={reply.viewerHasLiked}
-                          canInteract={canReply}
+                          canInteract={canInteract}
                           canReport={Boolean(user && user.id !== reply.authorId)}
+                          canManage={canManageReply}
                         />
                         {canReply ? (
                           <Button asChild size="xs" variant="ghost">
@@ -222,8 +250,12 @@ export default async function PostDetailPage({
 
       <Card id="reply-form" className="scroll-mt-20">
         <CardContent>
-          {user ? (
+          {canReply ? (
             <ReplyForm postId={post.id} />
+          ) : user?.status === "muted" ? (
+            <p className="text-sm text-muted-foreground">
+              你的账号当前处于禁言状态，暂时不能参与回复。
+            </p>
           ) : (
             <p className="text-sm text-muted-foreground">
               <Link href="/login" className="font-medium text-foreground underline">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CommunityShell } from "@/components/community-shell";
+import { Pagination } from "@/components/pagination";
 import { PostList } from "@/components/post-list";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,8 @@ import { getCurrentUser } from "@/server/auth";
 import {
   getNodeBySlug,
   getNodeChildren,
-  getPostsForNode,
+  getPostsForNodePage,
+  normalizePage,
 } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
@@ -17,23 +19,27 @@ export const dynamic = "force-dynamic";
 
 export default async function NodeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   await requireInstalled();
 
   const { slug } = await params;
+  const { page: pageParam } = await searchParams;
+  const page = normalizePage(pageParam);
   const node = await getNodeBySlug(slug);
 
   if (!node) {
     notFound();
   }
 
-  const [settings, user, children, posts] = await Promise.all([
+  const [settings, user, children, postsPage] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getNodeChildren(node.id),
-    getPostsForNode(node.id, !node.parentId),
+    getPostsForNodePage(node.id, !node.parentId, page),
   ]);
 
   return (
@@ -51,7 +57,11 @@ export default async function NodeDetailPage({
                   {node.parentId ? "二级节点" : "一级节点"}
                 </Badge>
                 <Badge variant={node.postingMode === "admin_only" ? "default" : "secondary"}>
-                  {node.postingMode === "admin_only" ? "仅管理员发帖" : "开放发布"}
+                  {node.postingMode === "admin_only"
+                    ? "仅管理员发帖"
+                    : node.postingMode === "moderated"
+                      ? "发帖需审核"
+                      : "开放发布"}
                 </Badge>
               </div>
               <h1 className="text-2xl font-semibold">{node.name}</h1>
@@ -75,7 +85,12 @@ export default async function NodeDetailPage({
           ) : null}
         </CardContent>
       </Card>
-      <PostList posts={posts} emptyText="这个节点还没有主题。" />
+      <PostList posts={postsPage.items} emptyText="这个节点还没有主题。" />
+      <Pagination
+        basePath={`/nodes/${node.slug}`}
+        page={postsPage.page}
+        totalPages={postsPage.totalPages}
+      />
     </CommunityShell>
   );
 }

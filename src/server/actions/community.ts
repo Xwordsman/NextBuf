@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -31,6 +31,16 @@ const replySchema = z.object({
   content: z.string().min(2, "回复至少 2 个字符"),
 });
 
+const postUpdateSchema = z.object({
+  nodeId: z.string().uuid("请选择节点"),
+  title: z.string().min(3, "标题至少 3 个字符").max(160),
+  content: z.string().min(5, "正文至少 5 个字符"),
+});
+
+const replyUpdateSchema = z.object({
+  content: z.string().min(2, "回复至少 2 个字符"),
+});
+
 const reportSchema = z.object({
   targetType: z.enum(["post", "reply"]),
   targetId: z.string().uuid("举报对象不正确"),
@@ -44,12 +54,57 @@ const profileSchema = z.object({
   bio: z.string().max(500, "个人简介最多 500 个字符").optional(),
 });
 
+function canManageContent(user: { id: string; role: string }, authorId: string) {
+  return user.role === "admin" || user.id === authorId;
+}
+
+async function refreshPostReplyMeta(postId: string) {
+  const [post] = await db
+    .select({ createdAt: posts.createdAt })
+    .from(posts)
+    .where(eq(posts.id, postId))
+    .limit(1);
+
+  if (!post) {
+    return;
+  }
+
+  const [replyCount] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(replies)
+    .where(and(eq(replies.postId, postId), eq(replies.status, "published")));
+
+  const [latestReply] = await db
+    .select({
+      authorId: replies.authorId,
+      createdAt: replies.createdAt,
+    })
+    .from(replies)
+    .where(and(eq(replies.postId, postId), eq(replies.status, "published")))
+    .orderBy(desc(replies.createdAt))
+    .limit(1);
+
+  await db
+    .update(posts)
+    .set({
+      replyCount: replyCount?.value ?? 0,
+      lastReplyAt: latestReply?.createdAt ?? post.createdAt,
+      lastReplyUserId: latestReply?.authorId ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(posts.id, postId));
+}
+
 export async function createPostAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   await requireInstalled();
   const user = await requireUser();
+
+  if (user.status === "muted") {
+    return { message: "你的账号当前处于禁言状态，暂时不能发布主题。" };
+  }
 
   const parsed = postSchema.safeParse({
     nodeId: formData.get("nodeId"),
@@ -76,6 +131,10 @@ export async function createPostAction(
   }
 
   const rootNodeId = node.parentId ?? node.id;
+  const status =
+    node.postingMode === "moderated" && user.role !== "admin"
+      ? "pending"
+      : "published";
   const [post] = await db
     .insert(posts)
     .values({
@@ -84,12 +143,19 @@ export async function createPostAction(
       authorId: user.id,
       title: parsed.data.title,
       content: parsed.data.content,
-      status: "published",
+      status,
     })
     .returning({ id: posts.id });
 
   if (!post) {
     return { message: "发布失败，请稍后重试。" };
+  }
+
+  if (status === "pending") {
+    revalidatePath("/admin");
+    revalidatePath("/admin/moderation");
+    revalidatePath("/me");
+    return { message: "主题已提交审核，通过后会出现在前台列表。" };
   }
 
   revalidatePath("/");
@@ -105,6 +171,10 @@ export async function createReplyAction(
   await requireInstalled();
   const user = await requireUser();
 
+  if (user.status === "muted") {
+    return { message: "你的账号当前处于禁言状态，暂时不能回复。" };
+  }
+
   const parsed = replySchema.safeParse({
     content: formData.get("content"),
   });
@@ -114,13 +184,39 @@ export async function createReplyAction(
   }
 
   const [post] = await db
-    .select()
+    .select({
+      id: posts.id,
+      title: posts.title,
+      authorId: posts.authorId,
+      replyCount: posts.replyCount,
+      nodePostingMode: nodes.postingMode,
+    })
     .from(posts)
+    .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .where(and(eq(posts.id, postId), eq(posts.status, "published")))
     .limit(1);
 
   if (!post) {
     return { message: "帖子不存在或不可回复。" };
+  }
+
+  const status =
+    post.nodePostingMode === "moderated" && user.role !== "admin"
+      ? "pending"
+      : "published";
+
+  if (status === "pending") {
+    await db.insert(replies).values({
+      postId,
+      authorId: user.id,
+      content: parsed.data.content,
+      status,
+    });
+
+    revalidatePath(`/posts/${postId}`);
+    revalidatePath("/admin");
+    revalidatePath("/admin/moderation");
+    return { message: "回复已提交审核，通过后会显示在主题下方。" };
   }
 
   const replyNumber = post.replyCount + 1;
@@ -157,6 +253,201 @@ export async function createReplyAction(
   revalidatePath(`/posts/${postId}`);
   revalidatePath("/me/notifications");
   redirect(`/posts/${postId}#reply-${replyNumber}`);
+}
+
+export async function updatePostAction(
+  postId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireInstalled();
+  const user = await requireUser();
+
+  const parsed = postUpdateSchema.safeParse({
+    nodeId: formData.get("nodeId"),
+    title: formData.get("title"),
+    content: formData.get("content"),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const [post] = await db
+    .select({
+      id: posts.id,
+      authorId: posts.authorId,
+      status: posts.status,
+    })
+    .from(posts)
+    .where(eq(posts.id, postId))
+    .limit(1);
+
+  if (!post || post.status === "deleted") {
+    return { message: "主题不存在或已被删除。" };
+  }
+
+  if (!canManageContent(user, post.authorId)) {
+    return { message: "你没有权限编辑这个主题。" };
+  }
+
+  const [node] = await db
+    .select()
+    .from(nodes)
+    .where(and(eq(nodes.id, parsed.data.nodeId), eq(nodes.status, "active")))
+    .limit(1);
+
+  if (!node) {
+    return { message: "节点不存在或不可用。" };
+  }
+
+  if (node.postingMode === "admin_only" && user.role !== "admin") {
+    return { message: "该节点仅管理员可以发帖。" };
+  }
+
+  await db
+    .update(posts)
+    .set({
+      nodeId: node.id,
+      rootNodeId: node.parentId ?? node.id,
+      title: parsed.data.title,
+      content: parsed.data.content,
+      editedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(posts.id, postId));
+
+  revalidatePath("/");
+  revalidatePath("/popular");
+  revalidatePath(`/nodes/${node.slug}`);
+  revalidatePath(`/posts/${postId}`);
+  revalidatePath("/admin/posts");
+
+  if (post.status === "published") {
+    redirect(`/posts/${postId}`);
+  }
+
+  redirect("/me");
+}
+
+export async function updateReplyAction(
+  replyId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireInstalled();
+  const user = await requireUser();
+
+  const parsed = replyUpdateSchema.safeParse({
+    content: formData.get("content"),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const [reply] = await db
+    .select({
+      id: replies.id,
+      postId: replies.postId,
+      authorId: replies.authorId,
+      status: replies.status,
+    })
+    .from(replies)
+    .where(eq(replies.id, replyId))
+    .limit(1);
+
+  if (!reply || reply.status === "deleted") {
+    return { message: "回复不存在或已被删除。" };
+  }
+
+  if (!canManageContent(user, reply.authorId)) {
+    return { message: "你没有权限编辑这条回复。" };
+  }
+
+  await db
+    .update(replies)
+    .set({
+      content: parsed.data.content,
+      editedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(replies.id, replyId));
+
+  revalidatePath(`/posts/${reply.postId}`);
+  revalidatePath("/admin/replies");
+  redirect(`/posts/${reply.postId}`);
+}
+
+export async function deletePostAction(formData: FormData) {
+  await requireInstalled();
+  const user = await requireUser();
+  const postId = String(formData.get("id") || "");
+
+  const [post] = await db
+    .select({
+      id: posts.id,
+      authorId: posts.authorId,
+      status: posts.status,
+    })
+    .from(posts)
+    .where(eq(posts.id, postId))
+    .limit(1);
+
+  if (!post || post.status === "deleted" || !canManageContent(user, post.authorId)) {
+    return;
+  }
+
+  await db
+    .update(posts)
+    .set({
+      status: "deleted",
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(posts.id, postId));
+
+  revalidatePath("/");
+  revalidatePath("/popular");
+  revalidatePath("/me");
+  revalidatePath("/admin/posts");
+  redirect("/");
+}
+
+export async function deleteReplyAction(formData: FormData) {
+  await requireInstalled();
+  const user = await requireUser();
+  const replyId = String(formData.get("id") || "");
+
+  const [reply] = await db
+    .select({
+      id: replies.id,
+      postId: replies.postId,
+      authorId: replies.authorId,
+      status: replies.status,
+    })
+    .from(replies)
+    .where(eq(replies.id, replyId))
+    .limit(1);
+
+  if (!reply || reply.status === "deleted" || !canManageContent(user, reply.authorId)) {
+    return;
+  }
+
+  await db
+    .update(replies)
+    .set({
+      status: "deleted",
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(replies.id, replyId));
+
+  await refreshPostReplyMeta(reply.postId);
+
+  revalidatePath(`/posts/${reply.postId}`);
+  revalidatePath("/admin/replies");
+  redirect(`/posts/${reply.postId}`);
 }
 
 export async function togglePostLikeAction(postId: string) {

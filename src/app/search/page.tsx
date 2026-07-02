@@ -1,12 +1,13 @@
 import { Search } from "lucide-react";
 
 import { CommunityShell } from "@/components/community-shell";
+import { Pagination } from "@/components/pagination";
 import { PostList } from "@/components/post-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/server/auth";
-import { searchVisiblePosts } from "@/server/queries";
+import { normalizePage, searchVisiblePostsPage } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +15,25 @@ export const dynamic = "force-dynamic";
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   await requireInstalled();
 
-  const { q } = await searchParams;
+  const { q, page: pageParam } = await searchParams;
   const keyword = typeof q === "string" ? q.trim() : "";
-  const [settings, user, posts] = await Promise.all([
+  const page = normalizePage(pageParam);
+  const [settings, user, postsPage] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
-    keyword.length >= 2 ? searchVisiblePosts(keyword) : Promise.resolve([]),
+    keyword.length >= 2
+      ? searchVisiblePostsPage(keyword, page)
+      : Promise.resolve({
+          items: [],
+          page: 1,
+          pageSize: 30,
+          total: 0,
+          totalPages: 1,
+        }),
   ]);
 
   return (
@@ -61,10 +71,18 @@ export default async function SearchPage({
         </Card>
       ) : (
         <PostList
-          posts={posts}
+          posts={postsPage.items}
           emptyText={keyword ? "没有找到匹配的主题。" : "输入关键词开始搜索。"}
         />
       )}
+      {keyword.length >= 2 ? (
+        <Pagination
+          basePath="/search"
+          page={postsPage.page}
+          totalPages={postsPage.totalPages}
+          query={{ q: keyword }}
+        />
+      ) : null}
     </CommunityShell>
   );
 }

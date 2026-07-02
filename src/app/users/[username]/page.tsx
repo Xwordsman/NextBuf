@@ -1,25 +1,30 @@
 import { notFound } from "next/navigation";
 
 import { CommunityShell } from "@/components/community-shell";
+import { Pagination } from "@/components/pagination";
 import { PostList } from "@/components/post-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDateTime, getInitial } from "@/lib/utils";
 import { getCurrentUser } from "@/server/auth";
-import { getUserProfile } from "@/server/queries";
+import { getUserProfile, getUserProfilePostsPage, normalizePage } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
 export const dynamic = "force-dynamic";
 
 export default async function UserProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   await requireInstalled();
 
   const { username } = await params;
+  const { page: pageParam } = await searchParams;
+  const page = normalizePage(pageParam);
   const [settings, user, profileData] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
@@ -30,7 +35,8 @@ export default async function UserProfilePage({
     notFound();
   }
 
-  const { profile, posts } = profileData;
+  const { profile } = profileData;
+  const postsPage = await getUserProfilePostsPage(profile.id, page);
 
   return (
     <CommunityShell settings={settings} user={user}>
@@ -66,7 +72,12 @@ export default async function UserProfilePage({
         </CardContent>
       </Card>
       <h2 className="mb-3 font-semibold">最近主题</h2>
-      <PostList posts={posts} emptyText="这个用户还没有发布主题。" />
+      <PostList posts={postsPage.items} emptyText="这个用户还没有发布主题。" />
+      <Pagination
+        basePath={`/users/${profile.username}`}
+        page={postsPage.page}
+        totalPages={postsPage.totalPages}
+      />
     </CommunityShell>
   );
 }

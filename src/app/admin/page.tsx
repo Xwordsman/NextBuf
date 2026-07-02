@@ -16,6 +16,7 @@ export default async function AdminPage() {
     ["隐藏主题", stats.hiddenPosts],
     ["隐藏回复", stats.hiddenReplies],
     ["禁用用户", stats.disabledUsers],
+    ["待审内容", stats.pendingContent],
     ["待处理举报", stats.pendingReports],
     ["未读通知", stats.unreadNotifications],
   ];

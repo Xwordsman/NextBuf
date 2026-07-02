@@ -1,13 +1,23 @@
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { updateUserStatusAction } from "@/server/actions/admin";
-import { getAdminUsers } from "@/server/queries";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { updateUserGovernanceAction } from "@/server/actions/admin";
+import { getAdminUsersPage, normalizePage } from "@/server/queries";
 import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminUsersPage() {
-  const users = await getAdminUsers();
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const usersPage = await getAdminUsersPage(normalizePage(pageParam));
 
   return (
     <Card>
@@ -15,12 +25,12 @@ export default async function AdminUsersPage() {
         <h2 className="font-semibold">用户管理</h2>
       </CardHeader>
       <CardContent className="space-y-2">
-        {users.map((user) => (
+        {usersPage.items.map((user) => (
           <div
             key={user.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-border p-3"
+            className="space-y-3 rounded-[var(--radius-control)] border border-border p-3"
           >
-            <div>
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{user.username}</span>
                 <Badge variant="outline">UID {user.uid}</Badge>
@@ -42,22 +52,48 @@ export default async function AdminUsersPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 {user.email} · {formatDateTime(user.createdAt)}
               </p>
+              {user.statusReason ? (
+                <p className="mt-2 rounded-[var(--radius-control)] bg-panel-muted p-2 text-xs text-muted-foreground">
+                  {user.statusReason}
+                </p>
+              ) : null}
             </div>
-            {user.role !== "admin" ? (
-              <form action={updateUserStatusAction}>
-                <input type="hidden" name="id" value={user.id} />
-                <input
-                  type="hidden"
-                  name="status"
-                  value={user.status === "active" ? "disabled" : "active"}
-                />
-                <button className="min-h-9 rounded-[var(--radius-control)] border border-border px-3 text-sm hover:bg-panel-muted">
-                  {user.status === "active" ? "禁用" : "启用"}
-                </button>
-              </form>
-            ) : null}
+            <form action={updateUserGovernanceAction} className="grid gap-3 md:grid-cols-[120px_120px_120px_minmax(0,1fr)_auto] md:items-start">
+              <input type="hidden" name="id" value={user.id} />
+              <NativeSelect name="role" defaultValue={user.role} className="w-full">
+                <NativeSelectOption value="member">成员</NativeSelectOption>
+                <NativeSelectOption value="moderator">版主</NativeSelectOption>
+                <NativeSelectOption value="admin">管理员</NativeSelectOption>
+              </NativeSelect>
+              <Input
+                name="trustLevel"
+                type="number"
+                min={0}
+                max={4}
+                defaultValue={user.trustLevel}
+              />
+              <NativeSelect name="status" defaultValue={user.status} className="w-full">
+                <NativeSelectOption value="active">正常</NativeSelectOption>
+                <NativeSelectOption value="muted">禁言</NativeSelectOption>
+                <NativeSelectOption value="disabled">禁用</NativeSelectOption>
+              </NativeSelect>
+              <Textarea
+                name="statusReason"
+                rows={2}
+                defaultValue={user.statusReason ?? ""}
+                placeholder="禁言或禁用原因"
+              />
+              <Button type="submit" size="sm">
+                保存
+              </Button>
+            </form>
           </div>
         ))}
+        <Pagination
+          basePath="/admin/users"
+          page={usersPage.page}
+          totalPages={usersPage.totalPages}
+        />
       </CardContent>
     </Card>
   );

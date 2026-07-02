@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomBytes } from "crypto";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, ne } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -125,7 +125,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       and(
         eq(sessions.tokenHash, hashSessionToken(token)),
         gt(sessions.expiresAt, new Date()),
-        eq(users.status, "active"),
+        ne(users.status, "disabled"),
       ),
     )
     .limit(1);

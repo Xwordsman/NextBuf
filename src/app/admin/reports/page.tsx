@@ -1,10 +1,11 @@
 import Link from "next/link";
 
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { handleReportAction } from "@/server/actions/admin";
-import { getAdminReports } from "@/server/queries";
+import { getAdminReportsPage, normalizePage } from "@/server/queries";
 import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +18,13 @@ const reasonLabels: Record<string, string> = {
   other: "其他",
 };
 
-export default async function AdminReportsPage() {
-  const reports = await getAdminReports();
+export default async function AdminReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const reportsPage = await getAdminReportsPage(normalizePage(pageParam));
 
   return (
     <Card>
@@ -29,12 +35,12 @@ export default async function AdminReportsPage() {
         </p>
       </CardHeader>
       <CardContent className="space-y-2">
-        {reports.length === 0 ? (
+        {reportsPage.items.length === 0 ? (
           <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted-foreground">
             暂时没有举报。
           </div>
         ) : (
-          reports.map((report) => (
+          reportsPage.items.map((report) => (
             <div
               key={report.id}
               className="rounded-[var(--radius-control)] border border-border p-3"
@@ -84,6 +90,11 @@ export default async function AdminReportsPage() {
             </div>
           ))
         )}
+        <Pagination
+          basePath="/admin/reports"
+          page={reportsPage.page}
+          totalPages={reportsPage.totalPages}
+        />
       </CardContent>
     </Card>
   );

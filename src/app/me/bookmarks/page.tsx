@@ -1,22 +1,29 @@
 import Link from "next/link";
 
 import { CommunityShell } from "@/components/community-shell";
+import { Pagination } from "@/components/pagination";
 import { PostList } from "@/components/post-list";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, requireUser } from "@/server/auth";
-import { getUserBookmarks } from "@/server/queries";
+import { getUserBookmarksPage, normalizePage } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
 export const dynamic = "force-dynamic";
 
-export default async function BookmarksPage() {
+export default async function BookmarksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireInstalled();
   const viewer = await requireUser();
+  const { page: pageParam } = await searchParams;
+  const page = normalizePage(pageParam);
 
-  const [settings, user, posts] = await Promise.all([
+  const [settings, user, postsPage] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
-    getUserBookmarks(viewer.id),
+    getUserBookmarksPage(viewer.id, page),
   ]);
 
   return (
@@ -32,7 +39,12 @@ export default async function BookmarksPage() {
           <Link href="/me/notifications">查看通知</Link>
         </Button>
       </div>
-      <PostList posts={posts} emptyText="你还没有收藏任何主题。" />
+      <PostList posts={postsPage.items} emptyText="你还没有收藏任何主题。" />
+      <Pagination
+        basePath="/me/bookmarks"
+        page={postsPage.page}
+        totalPages={postsPage.totalPages}
+      />
     </CommunityShell>
   );
 }
