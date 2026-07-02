@@ -11,13 +11,19 @@ import {
 import { getCurrentUser, requireUser } from "@/server/auth";
 import { getUserNotifications } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   await requireInstalled();
   const viewer = await requireUser();
+  const { status } = await searchParams;
+  const activeStatus = status === "unread" || status === "read" ? status : "all";
 
   const [settings, user, notifications] = await Promise.all([
     getSiteSettings(),
@@ -26,6 +32,32 @@ export default async function NotificationsPage() {
   ]);
 
   const unreadCount = notifications.filter((item) => !item.readAt).length;
+  const visibleNotifications = notifications.filter((item) => {
+    if (activeStatus === "unread") {
+      return !item.readAt;
+    }
+
+    if (activeStatus === "read") {
+      return Boolean(item.readAt);
+    }
+
+    return true;
+  });
+  const statusLinks = [
+    { href: "/me/notifications", label: "全部", value: "all", count: notifications.length },
+    {
+      href: "/me/notifications?status=unread",
+      label: "未读",
+      value: "unread",
+      count: unreadCount,
+    },
+    {
+      href: "/me/notifications?status=read",
+      label: "已读",
+      value: "read",
+      count: notifications.length - unreadCount,
+    },
+  ];
 
   return (
     <CommunityShell settings={settings} user={user}>
@@ -49,19 +81,35 @@ export default async function NotificationsPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold">最近通知</h2>
+          <div className="flex flex-wrap gap-2">
+            {statusLinks.map((item) => (
+              <Badge
+                key={item.value}
+                asChild
+                variant={activeStatus === item.value ? "default" : "outline"}
+              >
+                <Link href={item.href}>
+                  {item.label} {item.count}
+                </Link>
+              </Badge>
+            ))}
+          </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          {notifications.length === 0 ? (
+          {visibleNotifications.length === 0 ? (
             <div className="rounded-[var(--radius-control)] border border-border p-6 text-center text-sm text-muted-foreground">
               暂时没有通知。
             </div>
           ) : (
-            notifications.map((item) => (
+            visibleNotifications.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-border p-3"
+                className={cn(
+                  "flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-border p-3",
+                  !item.readAt && "border-primary/20 bg-muted/40",
+                )}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">

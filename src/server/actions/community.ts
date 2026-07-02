@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -11,10 +11,12 @@ import {
   notifications,
   postBookmarks,
   postLikes,
+  postTags,
   posts,
   replies,
   replyLikes,
   reports,
+  tags,
   users,
 } from "@/db/schema";
 import { formValue, type ActionState } from "@/server/action-state";
@@ -25,6 +27,7 @@ const postSchema = z.object({
   nodeId: z.string().uuid("请选择节点"),
   title: z.string().min(3, "标题至少 3 个字符").max(160),
   content: z.string().min(5, "正文至少 5 个字符"),
+  tagIds: z.array(z.string().uuid()).max(5, "最多选择 5 个标签"),
 });
 
 const replySchema = z.object({
@@ -35,6 +38,7 @@ const postUpdateSchema = z.object({
   nodeId: z.string().uuid("请选择节点"),
   title: z.string().min(3, "标题至少 3 个字符").max(160),
   content: z.string().min(5, "正文至少 5 个字符"),
+  tagIds: z.array(z.string().uuid()).max(5, "最多选择 5 个标签"),
 });
 
 const replyUpdateSchema = z.object({
@@ -56,6 +60,28 @@ const profileSchema = z.object({
 
 function canManageContent(user: { id: string; role: string }, authorId: string) {
   return user.role === "admin" || user.id === authorId;
+}
+
+function parseTagIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      formData
+        .getAll("tagIds")
+        .map((value) => String(value))
+        .filter(Boolean),
+    ),
+  );
+}
+
+async function resolveActiveTags(tagIds: string[]) {
+  if (tagIds.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({ id: tags.id, slug: tags.slug })
+    .from(tags)
+    .where(and(inArray(tags.id, tagIds), eq(tags.status, "active")));
 }
 
 async function refreshPostReplyMeta(postId: string) {
@@ -110,6 +136,7 @@ export async function createPostAction(
     nodeId: formData.get("nodeId"),
     title: formData.get("title"),
     content: formData.get("content"),
+    tagIds: parseTagIds(formData),
   });
 
   if (!parsed.success) {
@@ -130,22 +157,41 @@ export async function createPostAction(
     return { message: "该节点仅管理员可以发帖。" };
   }
 
+  const selectedTags = await resolveActiveTags(parsed.data.tagIds);
+
+  if (selectedTags.length !== parsed.data.tagIds.length) {
+    return { message: "标签不存在或已停用，请重新选择。" };
+  }
+
   const rootNodeId = node.parentId ?? node.id;
   const status =
     node.postingMode === "moderated" && user.role !== "admin"
       ? "pending"
       : "published";
-  const [post] = await db
-    .insert(posts)
-    .values({
-      nodeId: node.id,
-      rootNodeId,
-      authorId: user.id,
-      title: parsed.data.title,
-      content: parsed.data.content,
-      status,
-    })
-    .returning({ id: posts.id });
+  const [post] = await db.transaction(async (tx) => {
+    const created = await tx
+      .insert(posts)
+      .values({
+        nodeId: node.id,
+        rootNodeId,
+        authorId: user.id,
+        title: parsed.data.title,
+        content: parsed.data.content,
+        status,
+      })
+      .returning({ id: posts.id });
+
+    if (created[0] && selectedTags.length > 0) {
+      await tx.insert(postTags).values(
+        selectedTags.map((tag) => ({
+          postId: created[0].id,
+          tagId: tag.id,
+        })),
+      );
+    }
+
+    return created;
+  });
 
   if (!post) {
     return { message: "发布失败，请稍后重试。" };
@@ -160,6 +206,9 @@ export async function createPostAction(
 
   revalidatePath("/");
   revalidatePath(`/nodes/${node.slug}`);
+  for (const tag of selectedTags) {
+    revalidatePath(`/tags/${tag.slug}`);
+  }
   redirect(`/posts/${post.id}`);
 }
 
@@ -267,6 +316,7 @@ export async function updatePostAction(
     nodeId: formData.get("nodeId"),
     title: formData.get("title"),
     content: formData.get("content"),
+    tagIds: parseTagIds(formData),
   });
 
   if (!parsed.success) {
@@ -305,23 +355,45 @@ export async function updatePostAction(
     return { message: "该节点仅管理员可以发帖。" };
   }
 
-  await db
-    .update(posts)
-    .set({
-      nodeId: node.id,
-      rootNodeId: node.parentId ?? node.id,
-      title: parsed.data.title,
-      content: parsed.data.content,
-      editedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(posts.id, postId));
+  const selectedTags = await resolveActiveTags(parsed.data.tagIds);
+
+  if (selectedTags.length !== parsed.data.tagIds.length) {
+    return { message: "标签不存在或已停用，请重新选择。" };
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(posts)
+      .set({
+        nodeId: node.id,
+        rootNodeId: node.parentId ?? node.id,
+        title: parsed.data.title,
+        content: parsed.data.content,
+        editedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(posts.id, postId));
+
+    await tx.delete(postTags).where(eq(postTags.postId, postId));
+
+    if (selectedTags.length > 0) {
+      await tx.insert(postTags).values(
+        selectedTags.map((tag) => ({
+          postId,
+          tagId: tag.id,
+        })),
+      );
+    }
+  });
 
   revalidatePath("/");
   revalidatePath("/popular");
   revalidatePath(`/nodes/${node.slug}`);
   revalidatePath(`/posts/${postId}`);
   revalidatePath("/admin/posts");
+  for (const tag of selectedTags) {
+    revalidatePath(`/tags/${tag.slug}`);
+  }
 
   if (post.status === "published") {
     redirect(`/posts/${postId}`);

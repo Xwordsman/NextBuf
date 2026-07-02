@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
 import { MarkdownEditor } from "@/components/forms/markdown-editor";
+import { TagPicker } from "@/components/forms/tag-picker";
 import { Field, FieldError, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,15 +12,16 @@ import {
   NativeSelectOptGroup,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import type { NodeOption } from "@/server/queries";
+import type { NodeOption, TagOption } from "@/server/queries";
 import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { createPostAction } from "@/server/actions/community";
 
 type PostFormProps = {
   nodes: NodeOption[];
+  tags: TagOption[];
 };
 
-export function PostForm({ nodes }: PostFormProps) {
+export function PostForm({ nodes, tags }: PostFormProps) {
   const [state, action] = useActionState(createPostAction, emptyActionState);
   const roots = nodes.filter((node) => !node.parentId);
 
@@ -54,6 +56,12 @@ export function PostForm({ nodes }: PostFormProps) {
         <FieldLabel htmlFor="title">标题</FieldLabel>
         <Input id="title" name="title" required maxLength={160} />
         <FieldError errors={toFieldErrors(state.errors?.title)} />
+      </Field>
+      <Field>
+        <FieldLabel>标签</FieldLabel>
+        <TagPicker tags={tags} />
+        <FieldDescription>标签用于补充主题内容，方便搜索和聚合。</FieldDescription>
+        <FieldError errors={toFieldErrors(state.errors?.tagIds)} />
       </Field>
       <Field>
         <FieldLabel htmlFor="content">正文</FieldLabel>

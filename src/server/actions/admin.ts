@@ -13,6 +13,7 @@ import {
   replies,
   reports,
   siteSettings,
+  tags,
   users,
 } from "@/db/schema";
 import { checkboxValue } from "@/server/action-state";
@@ -28,6 +29,13 @@ const nodeSchema = z.object({
   postingMode: z.enum(["open", "moderated", "admin_only"]),
   status: z.enum(["active", "hidden"]),
   sortOrder: z.coerce.number().int().min(0).max(9999),
+});
+
+const tagSchema = z.object({
+  name: z.string().min(1, "标签名称不能为空").max(60, "标签名称最多 60 个字符"),
+  slug: z.string().min(1, "标签 slug 不能为空").max(80, "标签 slug 最多 80 个字符"),
+  description: z.string().max(300, "简介最多 300 个字符").optional(),
+  status: z.enum(["active", "hidden"]),
 });
 
 const settingsSchema = z.object({
@@ -266,6 +274,142 @@ export async function updateNodeStatusAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/nodes");
   revalidatePath("/admin/nodes");
+}
+
+export async function createTagAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const rawSlug = String(formData.get("slug") || formData.get("name") || "");
+  const parsed = tagSchema.safeParse({
+    name: formData.get("name"),
+    slug: slugify(rawSlug),
+    description: String(formData.get("description") || "").trim() || undefined,
+    status: formData.get("status"),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  try {
+    const [tag] = await db
+      .insert(tags)
+      .values({
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        description: parsed.data.description,
+        status: parsed.data.status,
+      })
+      .returning({ id: tags.id });
+
+    if (tag) {
+      await writeModerationLog(admin.id, "tag_created", "tag", tag.id, {
+        tag: parsed.data,
+      });
+    }
+  } catch {
+    return { message: "标签创建失败，可能是 slug 已存在。" };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/search");
+  revalidatePath("/admin/tags");
+  return { message: "标签已创建。" };
+}
+
+export async function updateTagAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const id = String(formData.get("id") || "");
+  const rawSlug = String(formData.get("slug") || formData.get("name") || "");
+  const parsed = tagSchema.safeParse({
+    name: formData.get("name"),
+    slug: slugify(rawSlug),
+    description: String(formData.get("description") || "").trim() || undefined,
+    status: formData.get("status"),
+  });
+
+  if (!id) {
+    return { message: "标签不存在。" };
+  }
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const [current] = await db.select().from(tags).where(eq(tags.id, id)).limit(1);
+
+  if (!current) {
+    return { message: "标签不存在。" };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(tags)
+        .set({
+          name: parsed.data.name,
+          slug: parsed.data.slug,
+          description: parsed.data.description,
+          status: parsed.data.status,
+          updatedAt: new Date(),
+        })
+        .where(eq(tags.id, id));
+
+      await tx.insert(moderationLogs).values({
+        actorId: admin.id,
+        action: "tag_updated",
+        targetType: "tag",
+        targetId: id,
+        metadata: {
+          before: {
+            name: current.name,
+            slug: current.slug,
+            description: current.description,
+            status: current.status,
+          },
+          after: parsed.data,
+        },
+      });
+    });
+  } catch {
+    return { message: "标签保存失败，可能是 slug 已存在。" };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/search");
+  revalidatePath(`/tags/${current.slug}`);
+  revalidatePath(`/tags/${parsed.data.slug}`);
+  revalidatePath("/admin/tags");
+  return { message: "标签已保存。" };
+}
+
+export async function updateTagStatusAction(formData: FormData) {
+  const admin = await requireAdmin();
+
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "active");
+
+  if (!id || !["active", "hidden"].includes(status)) {
+    return;
+  }
+
+  await db
+    .update(tags)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(tags.id, id));
+
+  await writeModerationLog(admin.id, "tag_status_updated", "tag", id, {
+    status,
+  });
+
+  revalidatePath("/");
+  revalidatePath("/search");
+  revalidatePath("/admin/tags");
 }
 
 export async function updatePostStatusAction(formData: FormData) {

@@ -13,6 +13,7 @@ import {
   Link2,
   List,
   ListOrdered,
+  Loader2,
   Minus,
   PencilLine,
   Quote,
@@ -20,6 +21,7 @@ import {
   SquareSplitHorizontal,
   Strikethrough,
   Table2,
+  Upload,
 } from "lucide-react";
 
 import { MarkdownContent } from "@/components/markdown-content";
@@ -117,7 +119,10 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<MarkdownMode>("split");
   const [content, setContent] = useState(defaultValue);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSelectionRef = useRef<SelectionRange | null>(null);
   const deferredContent = useDeferredValue(content);
   const isCompact = density === "compact";
@@ -281,6 +286,37 @@ export function MarkdownEditor({
   const insertImage = () =>
     wrapSelection("![", "](https://nextbuf.com/image.png)", "图片说明");
 
+  const uploadImage = async (file: File) => {
+    setIsUploading(true);
+    setUploadMessage(null);
+
+    try {
+      const payload = new FormData();
+      payload.append("file", file);
+
+      const response = await fetch("/api/uploads", {
+        method: "POST",
+        body: payload,
+      });
+      const result = (await response.json().catch(() => null)) as {
+        url?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !result?.url) {
+        throw new Error(result?.error ?? "图片上传失败");
+      }
+
+      const alt = file.name.replace(/\.[^.]+$/, "") || "image";
+      insertAtCursor(`![${alt}](${result.url})`);
+      setUploadMessage("图片已插入");
+    } catch (error) {
+      setUploadMessage(error instanceof Error ? error.message : "图片上传失败");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const insertCode = () =>
     withSelection(({ value, start, end, selected }) => {
       if (selected.includes("\n")) {
@@ -410,6 +446,12 @@ export function MarkdownEditor({
             <ToolbarButton label="链接" icon={Link2} onClick={insertLink} />
             <ToolbarButton label="图片" icon={Image} onClick={insertImage} />
             <ToolbarButton
+              label="上传图片"
+              icon={isUploading ? Loader2 : Upload}
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            />
+            <ToolbarButton
               label="代码块"
               icon={PencilLine}
               onClick={insertCodeBlock}
@@ -444,6 +486,28 @@ export function MarkdownEditor({
             </TabsList>
           </Tabs>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/gif,image/webp"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+
+            if (file) {
+              void uploadImage(file);
+            }
+          }}
+        />
+        {uploadMessage ? (
+          <span
+            aria-live="polite"
+            className="basis-full text-xs text-muted-foreground"
+          >
+            {uploadMessage}
+          </span>
+        ) : null}
       </div>
 
       <div

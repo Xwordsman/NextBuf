@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Settings,
+  Tags,
   Users,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/admin", label: "概览", icon: LayoutDashboard },
   { href: "/admin/nodes", label: "节点", icon: Network },
+  { href: "/admin/tags", label: "标签", icon: Tags },
   { href: "/admin/posts", label: "帖子", icon: FileText },
   { href: "/admin/replies", label: "回复", icon: MessageSquare },
   { href: "/admin/moderation", label: "审核", icon: ShieldCheck },

@@ -62,7 +62,11 @@ export async function CommunityShell({
 
   return (
     <>
-      <SiteHeader settings={settings} user={user} />
+      <SiteHeader
+        settings={settings}
+        user={user}
+        unreadNotificationCount={userStats?.notifications ?? 0}
+      />
       <main className={communityMainClassName}>
         {!hideNodeNav ? (
           <NodeNav

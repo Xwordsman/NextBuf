@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/form-submit-button";
 import { MarkdownEditor } from "@/components/forms/markdown-editor";
+import { TagPicker } from "@/components/forms/tag-picker";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/native-select";
 import { emptyActionState, toFieldErrors } from "@/server/action-state";
 import { updatePostAction } from "@/server/actions/community";
-import type { NodeOption } from "@/server/queries";
+import type { NodeOption, TagOption } from "@/server/queries";
 
 type PostEditFormProps = {
   post: {
@@ -21,11 +22,13 @@ type PostEditFormProps = {
     nodeId: string;
     title: string;
     content: string;
+    tagIds: string[];
   };
   nodes: NodeOption[];
+  tags: TagOption[];
 };
 
-export function PostEditForm({ post, nodes }: PostEditFormProps) {
+export function PostEditForm({ post, nodes, tags }: PostEditFormProps) {
   const actionWithPost = updatePostAction.bind(null, post.id);
   const [state, action] = useActionState(actionWithPost, emptyActionState);
   const roots = nodes.filter((node) => !node.parentId);
@@ -66,6 +69,12 @@ export function PostEditForm({ post, nodes }: PostEditFormProps) {
         <FieldLabel htmlFor="title">标题</FieldLabel>
         <Input id="title" name="title" required maxLength={160} defaultValue={post.title} />
         <FieldError errors={toFieldErrors(state.errors?.title)} />
+      </Field>
+      <Field>
+        <FieldLabel>标签</FieldLabel>
+        <TagPicker tags={tags} defaultSelectedIds={post.tagIds} />
+        <FieldDescription>标签用于补充主题内容，方便搜索和聚合。</FieldDescription>
+        <FieldError errors={toFieldErrors(state.errors?.tagIds)} />
       </Field>
       <Field>
         <FieldLabel htmlFor="content">正文</FieldLabel>

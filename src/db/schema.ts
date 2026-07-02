@@ -13,6 +13,7 @@ import {
   varchar,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 const createdAt = timestamp("created_at", { withTimezone: true })
   .notNull()
@@ -159,6 +160,10 @@ export const posts = pgTable(
     index("posts_node_last_reply_idx").on(table.nodeId, table.lastReplyAt),
     index("posts_author_created_idx").on(table.authorId, table.createdAt),
     index("posts_status_idx").on(table.status),
+    index("posts_search_idx").using(
+      "gin",
+      sql`to_tsvector('simple', coalesce(${table.title}, '') || ' ' || coalesce(${table.content}, ''))`,
+    ),
   ],
 );
 
@@ -315,7 +320,10 @@ export const tags = pgTable(
     createdAt,
     updatedAt,
   },
-  (table) => [uniqueIndex("tags_slug_unique").on(table.slug)],
+  (table) => [
+    uniqueIndex("tags_slug_unique").on(table.slug),
+    index("tags_status_idx").on(table.status),
+  ],
 );
 
 export const postTags = pgTable(
@@ -328,7 +336,10 @@ export const postTags = pgTable(
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.postId, table.tagId] })],
+  (table) => [
+    primaryKey({ columns: [table.postId, table.tagId] }),
+    index("post_tags_tag_idx").on(table.tagId),
+  ],
 );
 
 export const plugins = pgTable(

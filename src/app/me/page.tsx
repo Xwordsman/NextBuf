@@ -12,7 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getCurrentUser, requireUser } from "@/server/auth";
-import { getUserBookmarks, getUserPosts, getUserReplies } from "@/server/queries";
+import {
+  getUnreadNotificationCount,
+  getUserBookmarks,
+  getUserPosts,
+  getUserReplies,
+} from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 import { formatDateTime } from "@/lib/utils";
 
@@ -22,17 +27,22 @@ export default async function MePage() {
   await requireInstalled();
   const viewer = await requireUser();
 
-  const [settings, user, posts, replies, bookmarks] = await Promise.all([
+  const [settings, user, posts, replies, bookmarks, unreadCount] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getUserPosts(viewer.id),
     getUserReplies(viewer.id),
     getUserBookmarks(viewer.id),
+    getUnreadNotificationCount(viewer.id),
   ]);
 
   return (
     <>
-      <SiteHeader settings={settings} user={user} />
+      <SiteHeader
+        settings={settings}
+        user={user}
+        unreadNotificationCount={unreadCount}
+      />
       <main className={communityMainClassName}>
         <div className={communityTwoColumnClassName}>
           <section className={`${communityContentClassName} space-y-4`}>

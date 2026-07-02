@@ -2,7 +2,7 @@ import { CommunityShell } from "@/components/community-shell";
 import { PostForm } from "@/components/forms/post-form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getCurrentUser, requireUser } from "@/server/auth";
-import { getPublicNodes } from "@/server/queries";
+import { getPublicNodes, getPublicTags } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +11,11 @@ export default async function NewPostPage() {
   await requireInstalled();
   await requireUser();
 
-  const [settings, user, nodes] = await Promise.all([
+  const [settings, user, nodes, tags] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getPublicNodes(),
+    getPublicTags(),
   ]);
 
   return (
@@ -27,7 +28,7 @@ export default async function NewPostPage() {
           </p>
         </CardHeader>
         <CardContent>
-          <PostForm nodes={nodes} />
+          <PostForm nodes={nodes} tags={tags} />
         </CardContent>
       </Card>
     </CommunityShell>

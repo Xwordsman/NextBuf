@@ -27,9 +27,14 @@ import {
 type SiteHeaderProps = {
   settings: SiteSettings | null;
   user: CurrentUser | null;
+  unreadNotificationCount?: number;
 };
 
-export function SiteHeader({ settings, user }: SiteHeaderProps) {
+export function SiteHeader({
+  settings,
+  user,
+  unreadNotificationCount = 0,
+}: SiteHeaderProps) {
   return (
     <header className="border-b border-border bg-panel">
       <div className="mx-auto flex min-h-16 w-full max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
@@ -63,9 +68,14 @@ export function SiteHeader({ settings, user }: SiteHeaderProps) {
                 href="/me/notifications"
                 aria-label="通知"
                 title="通知"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
               >
                 <Bell size={18} />
+                {unreadNotificationCount > 0 ? (
+                  <span className="absolute right-1 top-1 inline-flex min-w-4 justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground">
+                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                  </span>
+                ) : null}
               </Link>
 
               <DropdownMenu>

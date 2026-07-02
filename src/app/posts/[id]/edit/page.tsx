@@ -6,7 +6,7 @@ import { PostEditForm } from "@/components/forms/post-edit-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getCurrentUser, requireUser } from "@/server/auth";
-import { getEditablePost, getPublicNodes } from "@/server/queries";
+import { getEditablePost, getPublicNodes, getPublicTags } from "@/server/queries";
 import { getSiteSettings, requireInstalled } from "@/server/site";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +20,12 @@ export default async function EditPostPage({
   const viewer = await requireUser();
   const { id } = await params;
 
-  const [settings, user, post, nodes] = await Promise.all([
+  const [settings, user, post, nodes, tags] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getEditablePost(id),
     getPublicNodes(),
+    getPublicTags(),
   ]);
 
   if (!post || (post.authorId !== viewer.id && viewer.role !== "admin")) {
@@ -48,7 +49,7 @@ export default async function EditPostPage({
           ) : null}
         </CardHeader>
         <CardContent>
-          <PostEditForm post={post} nodes={nodes} />
+          <PostEditForm post={post} nodes={nodes} tags={tags} />
         </CardContent>
       </Card>
     </CommunityShell>

@@ -14,6 +14,8 @@ services:
       PORT: 3000
     ports:
       - "${WEB_PORT:-3050}:3000"
+    volumes:
+      - nextbuf_uploads:/app/public/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,3 +47,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  nextbuf_uploads:

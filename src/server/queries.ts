@@ -21,11 +21,13 @@ import {
   notifications,
   postBookmarks,
   postLikes,
+  postTags,
   posts,
   replies,
   replyLikes,
   reports,
   siteSettings,
+  tags,
   users,
 } from "@/db/schema";
 
@@ -72,7 +74,17 @@ export type NodeOption = {
   sortOrder: number;
 };
 
-export type PostListItem = {
+export type TagOption = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  status: string;
+};
+
+export type PostTagItem = Pick<TagOption, "id" | "name" | "slug">;
+
+type PostListRow = {
   id: string;
   title: string;
   status: string;
@@ -86,6 +98,10 @@ export type PostListItem = {
   authorAvatarUrl: string | null;
   authorTrustLevel: number;
   lastReplyUsername: string | null;
+};
+
+export type PostListItem = PostListRow & {
+  tags: PostTagItem[];
 };
 
 export type ReplyItem = {
@@ -117,6 +133,39 @@ const postListSelection = {
   authorTrustLevel: users.trustLevel,
   lastReplyUsername: lastReplyUsers.username,
 };
+
+async function attachPostTags<T extends { id: string }>(
+  items: T[],
+): Promise<Array<T & { tags: PostTagItem[] }>> {
+  if (items.length === 0) {
+    return items.map((item) => ({ ...item, tags: [] }));
+  }
+
+  const ids = items.map((item) => item.id);
+  const rows = await db
+    .select({
+      postId: postTags.postId,
+      id: tags.id,
+      name: tags.name,
+      slug: tags.slug,
+    })
+    .from(postTags)
+    .innerJoin(tags, eq(postTags.tagId, tags.id))
+    .where(and(inArray(postTags.postId, ids), eq(tags.status, "active")))
+    .orderBy(asc(tags.name));
+  const grouped = new Map<string, PostTagItem[]>();
+
+  for (const row of rows) {
+    const group = grouped.get(row.postId) ?? [];
+    group.push({ id: row.id, name: row.name, slug: row.slug });
+    grouped.set(row.postId, group);
+  }
+
+  return items.map((item) => ({
+    ...item,
+    tags: grouped.get(item.id) ?? [],
+  }));
+}
 
 export async function getPublicNodes(): Promise<NodeOption[]> {
   return db
@@ -214,6 +263,103 @@ export async function getRootNavigationNodes(): Promise<NodeOption[]> {
     .orderBy(asc(nodes.sortOrder), asc(nodes.name));
 }
 
+export async function getPublicTags(): Promise<TagOption[]> {
+  return db
+    .select({
+      id: tags.id,
+      name: tags.name,
+      slug: tags.slug,
+      description: tags.description,
+      status: tags.status,
+    })
+    .from(tags)
+    .where(eq(tags.status, "active"))
+    .orderBy(asc(tags.name));
+}
+
+export async function getAllTagsPage(
+  page = 1,
+  pageSize = ADMIN_PAGE_SIZE,
+) {
+  const [total] = await db.select({ value: count() }).from(tags);
+  const items = await db
+    .select({
+      id: tags.id,
+      name: tags.name,
+      slug: tags.slug,
+      description: tags.description,
+      status: tags.status,
+      createdAt: tags.createdAt,
+      postCount: sql<number>`count(${postTags.postId})::int`,
+    })
+    .from(tags)
+    .leftJoin(postTags, eq(tags.id, postTags.tagId))
+    .groupBy(
+      tags.id,
+      tags.name,
+      tags.slug,
+      tags.description,
+      tags.status,
+      tags.createdAt,
+    )
+    .orderBy(asc(tags.name))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+}
+
+export async function getTagForAdmin(id: string) {
+  const [tag] = await db.select().from(tags).where(eq(tags.id, id)).limit(1);
+
+  return tag ?? null;
+}
+
+export async function getTagBySlug(slug: string) {
+  const [tag] = await db
+    .select({
+      id: tags.id,
+      name: tags.name,
+      slug: tags.slug,
+      description: tags.description,
+      status: tags.status,
+    })
+    .from(tags)
+    .where(and(eq(tags.slug, slug), eq(tags.status, "active")))
+    .limit(1);
+
+  return tag ?? null;
+}
+
+export async function getPostsForTagPage(
+  tagId: string,
+  page = 1,
+  pageSize = PUBLIC_PAGE_SIZE,
+): Promise<PaginatedResult<PostListItem>> {
+  const condition = and(eq(postTags.tagId, tagId), eq(posts.status, "published"));
+  const [total] = await db
+    .select({ value: count() })
+    .from(postTags)
+    .innerJoin(posts, eq(postTags.postId, posts.id))
+    .where(condition);
+  const items = await db
+    .select(postListSelection)
+    .from(postTags)
+    .innerJoin(posts, eq(postTags.postId, posts.id))
+    .innerJoin(nodes, eq(posts.nodeId, nodes.id))
+    .innerJoin(users, eq(posts.authorId, users.id))
+    .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
+    .where(condition)
+    .orderBy(desc(posts.lastReplyAt), desc(posts.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
+}
+
 export async function getNodeBySlug(slug: string) {
   const [node] = await db
     .select()
@@ -225,7 +371,7 @@ export async function getNodeBySlug(slug: string) {
 }
 
 export async function getLatestPosts(limit = 30): Promise<PostListItem[]> {
-  return db
+  const items = await db
     .select(postListSelection)
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
@@ -234,6 +380,8 @@ export async function getLatestPosts(limit = 30): Promise<PostListItem[]> {
     .where(eq(posts.status, "published"))
     .orderBy(desc(posts.lastReplyAt), desc(posts.createdAt))
     .limit(limit);
+
+  return attachPostTags(items);
 }
 
 export async function getLatestPostsPage(
@@ -253,11 +401,14 @@ export async function getLatestPostsPage(
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
 }
 
 export async function getPopularPosts(limit = 30): Promise<PostListItem[]> {
-  return db
+  const items = await db
     .select(postListSelection)
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
@@ -269,6 +420,8 @@ export async function getPopularPosts(limit = 30): Promise<PostListItem[]> {
       desc(posts.lastReplyAt),
     )
     .limit(limit);
+
+  return attachPostTags(items);
 }
 
 export async function getPopularPostsPage(
@@ -291,7 +444,10 @@ export async function getPopularPostsPage(
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
 }
 
 export async function getPostsForNode(nodeId: string, isRoot: boolean) {
@@ -299,7 +455,7 @@ export async function getPostsForNode(nodeId: string, isRoot: boolean) {
     ? eq(posts.rootNodeId, nodeId)
     : eq(posts.nodeId, nodeId);
 
-  return db
+  const items = await db
     .select(postListSelection)
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
@@ -308,6 +464,8 @@ export async function getPostsForNode(nodeId: string, isRoot: boolean) {
     .where(and(condition, eq(posts.status, "published")))
     .orderBy(desc(posts.lastReplyAt), desc(posts.createdAt))
     .limit(50);
+
+  return attachPostTags(items);
 }
 
 export async function getPostsForNodePage(
@@ -332,7 +490,10 @@ export async function getPostsForNodePage(
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
 }
 
 export async function getPostDetails(id: string, viewerId?: string) {
@@ -366,27 +527,44 @@ export async function getPostDetails(id: string, viewerId?: string) {
     return null;
   }
 
-  const postReplies = await db
-    .select({
-      id: replies.id,
-      content: replies.content,
-      status: replies.status,
-      likeCount: replies.likeCount,
-      createdAt: replies.createdAt,
-      editedAt: replies.editedAt,
-      authorId: replies.authorId,
-      authorUsername: users.username,
-      authorAvatarUrl: users.avatarUrl,
-      authorTrustLevel: users.trustLevel,
-    })
-    .from(replies)
-    .innerJoin(users, eq(replies.authorId, users.id))
-    .where(and(eq(replies.postId, id), eq(replies.status, "published")))
-    .orderBy(asc(replies.createdAt));
+  const [postReplies, tagRows] = await Promise.all([
+    db
+      .select({
+        id: replies.id,
+        content: replies.content,
+        status: replies.status,
+        likeCount: replies.likeCount,
+        createdAt: replies.createdAt,
+        editedAt: replies.editedAt,
+        authorId: replies.authorId,
+        authorUsername: users.username,
+        authorAvatarUrl: users.avatarUrl,
+        authorTrustLevel: users.trustLevel,
+      })
+      .from(replies)
+      .innerJoin(users, eq(replies.authorId, users.id))
+      .where(and(eq(replies.postId, id), eq(replies.status, "published")))
+      .orderBy(asc(replies.createdAt)),
+    db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        slug: tags.slug,
+      })
+      .from(postTags)
+      .innerJoin(tags, eq(postTags.tagId, tags.id))
+      .where(and(eq(postTags.postId, id), eq(tags.status, "active")))
+      .orderBy(asc(tags.name)),
+  ]);
 
   if (!viewerId) {
     return {
-      post: { ...post, viewerHasLiked: false, viewerHasBookmarked: false },
+      post: {
+        ...post,
+        tags: tagRows,
+        viewerHasLiked: false,
+        viewerHasBookmarked: false,
+      },
       replies: postReplies.map((reply) => ({ ...reply, viewerHasLiked: false })),
     };
   }
@@ -421,6 +599,7 @@ export async function getPostDetails(id: string, viewerId?: string) {
   return {
     post: {
       ...post,
+      tags: tagRows,
       viewerHasLiked: Boolean(postLike),
       viewerHasBookmarked: Boolean(bookmark),
     },
@@ -449,7 +628,16 @@ export async function getEditablePost(id: string) {
     .where(and(eq(posts.id, id), ne(posts.status, "deleted")))
     .limit(1);
 
-  return post ?? null;
+  if (!post) {
+    return null;
+  }
+
+  const tagRows = await db
+    .select({ tagId: postTags.tagId })
+    .from(postTags)
+    .where(eq(postTags.postId, id));
+
+  return { ...post, tagIds: tagRows.map((row) => row.tagId) };
 }
 
 export async function getEditableReply(id: string) {
@@ -516,7 +704,62 @@ export async function getUserProfilePostsPage(
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
+}
+
+export async function getUserProfileStats(userId: string) {
+  const [postCount] = await db
+    .select({ value: count() })
+    .from(posts)
+    .where(and(eq(posts.authorId, userId), eq(posts.status, "published")));
+  const [replyCount] = await db
+    .select({ value: count() })
+    .from(replies)
+    .where(and(eq(replies.authorId, userId), eq(replies.status, "published")));
+  const [bookmarkCount] = await db
+    .select({ value: count() })
+    .from(postBookmarks)
+    .where(eq(postBookmarks.userId, userId));
+  const [likesReceived] = await db
+    .select({
+      value: sql<number>`coalesce(sum(${posts.likeCount}), 0)::int`,
+    })
+    .from(posts)
+    .where(and(eq(posts.authorId, userId), eq(posts.status, "published")));
+
+  return {
+    posts: postCount?.value ?? 0,
+    replies: replyCount?.value ?? 0,
+    bookmarks: bookmarkCount?.value ?? 0,
+    likesReceived: likesReceived?.value ?? 0,
+  };
+}
+
+export async function getUserProfileReplies(userId: string, limit = 8) {
+  return db
+    .select({
+      id: replies.id,
+      content: replies.content,
+      likeCount: replies.likeCount,
+      createdAt: replies.createdAt,
+      postId: replies.postId,
+      postTitle: posts.title,
+      postStatus: posts.status,
+    })
+    .from(replies)
+    .innerJoin(posts, eq(replies.postId, posts.id))
+    .where(
+      and(
+        eq(replies.authorId, userId),
+        eq(replies.status, "published"),
+        eq(posts.status, "published"),
+      ),
+    )
+    .orderBy(desc(replies.createdAt))
+    .limit(limit);
 }
 
 export async function getCommunityStats() {
@@ -893,7 +1136,7 @@ export async function getAdminModerationLogDetails(id: string) {
 }
 
 export async function getUserBookmarks(userId: string): Promise<PostListItem[]> {
-  return db
+  const items = await db
     .select(postListSelection)
     .from(postBookmarks)
     .innerJoin(posts, eq(postBookmarks.postId, posts.id))
@@ -903,6 +1146,8 @@ export async function getUserBookmarks(userId: string): Promise<PostListItem[]> 
     .where(and(eq(postBookmarks.userId, userId), eq(posts.status, "published")))
     .orderBy(desc(postBookmarks.createdAt))
     .limit(50);
+
+  return attachPostTags(items);
 }
 
 export async function getUserBookmarksPage(
@@ -928,11 +1173,14 @@ export async function getUserBookmarksPage(
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
 }
 
 export async function getUserPosts(userId: string): Promise<PostListItem[]> {
-  return db
+  const items = await db
     .select(postListSelection)
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
@@ -941,6 +1189,8 @@ export async function getUserPosts(userId: string): Promise<PostListItem[]> {
     .where(and(eq(posts.authorId, userId), eq(posts.status, "published")))
     .orderBy(desc(posts.createdAt))
     .limit(30);
+
+  return attachPostTags(items);
 }
 
 export async function getUserReplies(userId: string) {
@@ -1004,34 +1254,95 @@ export async function getNodeChildren(parentId: string) {
     .orderBy(asc(nodes.sortOrder), asc(nodes.name));
 }
 
-export async function searchVisiblePosts(query: string) {
+function visiblePostSearchCondition(query: string) {
   const normalized = `%${query}%`;
 
-  return db
+  return or(
+    sql`to_tsvector('simple', coalesce(${posts.title}, '') || ' ' || coalesce(${posts.content}, '')) @@ plainto_tsquery('simple', ${query})`,
+    sql`${posts.title} ilike ${normalized}`,
+    sql`${posts.content} ilike ${normalized}`,
+  );
+}
+
+function visiblePostSearchRank(query: string) {
+  return sql<number>`ts_rank_cd(to_tsvector('simple', coalesce(${posts.title}, '') || ' ' || coalesce(${posts.content}, '')), plainto_tsquery('simple', ${query}))`;
+}
+
+export async function searchVisiblePosts(query: string) {
+  const keyword = query.trim();
+
+  if (keyword.length < 2) {
+    return [];
+  }
+
+  const items = await db
     .select(postListSelection)
     .from(posts)
     .innerJoin(nodes, eq(posts.nodeId, nodes.id))
     .innerJoin(users, eq(posts.authorId, users.id))
     .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
-    .where(
-      and(
-        eq(posts.status, "published"),
-        or(sql`${posts.title} ilike ${normalized}`, sql`${posts.content} ilike ${normalized}`),
-      ),
-    )
-    .orderBy(desc(posts.lastReplyAt))
+    .where(and(eq(posts.status, "published"), visiblePostSearchCondition(keyword)))
+    .orderBy(desc(visiblePostSearchRank(keyword)), desc(posts.lastReplyAt))
     .limit(30);
+
+  return attachPostTags(items);
 }
 
 export async function searchVisiblePostsPage(
   query: string,
   page = 1,
   pageSize = PUBLIC_PAGE_SIZE,
+  tagSlug?: string,
 ): Promise<PaginatedResult<PostListItem>> {
-  const normalized = `%${query}%`;
+  const keyword = query.trim();
+  const hasKeyword = keyword.length >= 2;
+  const hasTag = Boolean(tagSlug);
+
+  if (!hasKeyword && !hasTag) {
+    return {
+      items: [],
+      ...paginationMeta(0, page, pageSize),
+    };
+  }
+
+  if (hasTag) {
+    const condition = and(
+      eq(posts.status, "published"),
+      eq(tags.status, "active"),
+      eq(tags.slug, tagSlug!),
+      hasKeyword ? visiblePostSearchCondition(keyword) : undefined,
+    );
+    const [total] = await db
+      .select({ value: count() })
+      .from(postTags)
+      .innerJoin(posts, eq(postTags.postId, posts.id))
+      .innerJoin(tags, eq(postTags.tagId, tags.id))
+      .where(condition);
+    const items = await db
+      .select(postListSelection)
+      .from(postTags)
+      .innerJoin(posts, eq(postTags.postId, posts.id))
+      .innerJoin(tags, eq(postTags.tagId, tags.id))
+      .innerJoin(nodes, eq(posts.nodeId, nodes.id))
+      .innerJoin(users, eq(posts.authorId, users.id))
+      .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
+      .where(condition)
+      .orderBy(
+        hasKeyword ? desc(visiblePostSearchRank(keyword)) : desc(posts.lastReplyAt),
+        desc(posts.lastReplyAt),
+      )
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
+
+    return {
+      items: await attachPostTags(items),
+      ...paginationMeta(total?.value ?? 0, page, pageSize),
+    };
+  }
+
   const condition = and(
     eq(posts.status, "published"),
-    or(sql`${posts.title} ilike ${normalized}`, sql`${posts.content} ilike ${normalized}`),
+    visiblePostSearchCondition(keyword),
   );
   const [total] = await db.select({ value: count() }).from(posts).where(condition);
   const items = await db
@@ -1041,9 +1352,12 @@ export async function searchVisiblePostsPage(
     .innerJoin(users, eq(posts.authorId, users.id))
     .leftJoin(lastReplyUsers, eq(posts.lastReplyUserId, lastReplyUsers.id))
     .where(condition)
-    .orderBy(desc(posts.lastReplyAt))
+    .orderBy(desc(visiblePostSearchRank(keyword)), desc(posts.lastReplyAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  return { items, ...paginationMeta(total?.value ?? 0, page, pageSize) };
+  return {
+    items: await attachPostTags(items),
+    ...paginationMeta(total?.value ?? 0, page, pageSize),
+  };
 }

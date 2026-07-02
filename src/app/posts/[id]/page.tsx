@@ -70,6 +70,16 @@ export default async function PostDetailPage({
                 <Badge asChild variant="secondary" className="h-5 px-1.5 text-[11px]">
                   <Link href={`/nodes/${post.nodeSlug}`}>{post.nodeName}</Link>
                 </Badge>
+                {post.tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    asChild
+                    variant="outline"
+                    className="h-5 px-1.5 text-[11px]"
+                  >
+                    <Link href={`/tags/${tag.slug}`}>{tag.name}</Link>
+                  </Badge>
+                ))}
                 <span className="text-xs text-muted-foreground">·</span>
                 <Link
                   href={`/users/${post.authorUsername}`}

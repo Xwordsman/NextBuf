@@ -74,6 +74,16 @@ export function PostList({
                     {post.nodeName}
                   </Badge>
                 </Link>
+                {post.tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    asChild
+                    variant="outline"
+                    className="h-5 px-1.5 text-[11px]"
+                  >
+                    <Link href={`/tags/${tag.slug}`}>{tag.name}</Link>
+                  </Badge>
+                ))}
                 <span className="text-xs text-muted-foreground">·</span>
                 <Link
                   href={`/users/${post.authorUsername}`}
